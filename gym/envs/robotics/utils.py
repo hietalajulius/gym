@@ -56,6 +56,46 @@ def mocap_set_action(sim, action):
         sim.data.mocap_quat[:] = sim.data.mocap_quat + quat_delta
 
 
+def mocap_set_action_cloth(sim, pos_ctrl, grip=None):
+    """The action controls the robot using mocaps. Specifically, bodies
+    on the robot (for example the gripper wrist) is controlled with
+    mocap bodies. In this case the action is the desired difference
+    in position and orientation (quaternion), in world coordinates,
+    of the of the target body. The mocap is positioned relative to
+    the target body according to the delta, and the MuJoCo equality
+    constraint optimizer tries to center the welded body on the mocap.
+    """
+    if sim.model.nmocap > 0:
+        reset_mocap2body_xpos(sim) #Mocap reset
+        action = sim.data.mocap_pos + pos_ctrl[:3]
+        action = action.flatten()
+        if action[2] < 0: #Limit mocap from going under the floor
+            action[2] = 0
+        #TODO add limit for mocap workspace
+        sim.data.mocap_pos[:] = action
+        if grip and grip < 0:
+            remove_mocap_welds(sim)
+        #sim.data.mocap_quat[:] = sim.data.mocap_quat + quat_delta
+
+def mocap_set_action_cloth_direct(sim, action):
+    """The action controls the robot using mocaps. Specifically, bodies
+    on the robot (for example the gripper wrist) is controlled with
+    mocap bodies. In this case the action is the desired difference
+    in position and orientation (quaternion), in world coordinates,
+    of the of the target body. The mocap is positioned relative to
+    the target body according to the delta, and the MuJoCo equality
+    constraint optimizer tries to center the welded body on the mocap.
+    """
+    if sim.model.nmocap > 0:
+        #reset_mocap2body_xpos(sim) #Mocap reset
+        action = action.flatten()
+        if action[2] < 0: #Limit mocap from going under the floor
+            action[2] = 0
+        sim.data.mocap_pos[:] = action[:3]
+        if action[3] == -1:
+            remove_mocap_welds(sim)
+
+
 def reset_mocap_welds(sim):
     """Resets the mocap welds that we use for actuation.
     """
@@ -64,6 +104,24 @@ def reset_mocap_welds(sim):
             if sim.model.eq_type[i] == mujoco_py.const.EQ_WELD:
                 sim.model.eq_data[i, :] = np.array(
                     [0., 0., 0., 1., 0., 0., 0.])
+    sim.forward()
+
+def remove_mocap_welds(sim):
+    """Removes the mocap welds that we use for actuation.
+    """
+    if sim.model.nmocap > 0 and sim.model.eq_data is not None:
+        for i in range(sim.model.eq_data.shape[0]):
+            if sim.model.eq_type[i] == mujoco_py.const.EQ_WELD:
+                sim.model.eq_active[i] = False
+    sim.forward()
+
+def enable_mocap_welds(sim):
+    """Removes the mocap welds that we use for actuation.
+    """
+    if sim.model.nmocap > 0 and sim.model.eq_data is not None:
+        for i in range(sim.model.eq_data.shape[0]):
+            if sim.model.eq_type[i] == mujoco_py.const.EQ_WELD:
+                sim.model.eq_active[i] = True
     sim.forward()
 
 
