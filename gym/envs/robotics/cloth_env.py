@@ -1,6 +1,9 @@
 import numpy as np
 
 from gym.envs.robotics import rotations, cloth_robot_env, utils
+import cv2
+import copy
+from PIL import Image
 
 
 def goal_distance(goal_a, goal_b):
@@ -14,7 +17,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
     def __init__(
         self, model_path, n_substeps, noise_range,
-        distance_threshold, n_actions, task="diagonal"
+        distance_threshold, n_actions, task="diagonal", strict=False, sparse_dense=False, pixels=False
     ):
         """Initializes a new Fetch environment.
 
@@ -34,6 +37,9 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         """
         self.noise_range = noise_range
         self.task = task
+        self.pixels = pixels
+        self.strict = strict
+        self.sparse_dense = sparse_dense
         self.distance_threshold = distance_threshold
         self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4"]
 
@@ -45,19 +51,71 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
     def compute_reward(self, achieved_goal, goal, info):
         if self.task == "sideways":
-            achieved_goal = np.reshape(achieved_goal, (-1,6))
-            goal = np.reshape(goal, (-1,6))
-            d1 = goal_distance(achieved_goal[:, :3], goal[:, :3]) > self.distance_threshold
-            d2 = goal_distance(achieved_goal[:, 3:6], goal[:, 3:6]) > self.distance_threshold
-            res = -(np.any(np.array([d1, d2]), axis=0)).astype(np.float32).flatten()
+            if self.strict:
+                achieved_goal = np.reshape(achieved_goal, (-1,12))
+                goal = np.reshape(goal, (-1,12))
+
+                dist1 = goal_distance(achieved_goal[:, :3], goal[:, :3])
+                d1 =  dist1 > self.distance_threshold
+                
+                dist2 = goal_distance(achieved_goal[:, 3:6], goal[:, 3:6])
+                d2 = dist2  > self.distance_threshold
+
+                dist3 = goal_distance(achieved_goal[:, 6:9], goal[:, 6:9])
+                d3 =  dist3 > self.distance_threshold/2
+
+                dist4 = goal_distance(achieved_goal[:, 9:12], goal[:, 9:12])
+                d4 =  dist4 > self.distance_threshold/2
+
+                res = -(np.any(np.array([d1, d2, d3, d4]), axis=0)).astype(np.float32).flatten()
+
+                if self.sparse_dense:
+                    mask = res == 0
+                    res[mask] = (4*np.ones(mask.shape[0]) - (dist1[mask] + dist2[mask] + dist3[mask] + dist4[mask])/self.distance_threshold)/4
+            else:
+                achieved_goal = np.reshape(achieved_goal, (-1,6))
+                goal = np.reshape(goal, (-1,6))
+                dist1 = goal_distance(achieved_goal[:, :3], goal[:, :3])
+                d1 =  dist1 > self.distance_threshold
+
+                dist2 = goal_distance(achieved_goal[:, 3:6], goal[:, 3:6])
+                d2 =  dist2 > self.distance_threshold
+                res = -(np.any(np.array([d1, d2]), axis=0)).astype(np.float32).flatten()
+
+                if self.sparse_dense:
+                    mask = res == 0
+                    res[mask] = (2*np.ones(mask.shape[0]) - (dist1[mask] + dist2[mask])/self.distance_threshold)/2
+
+
             if len(res) == 1:
                 res = res[0]
-            return res
-
         else:
-            d = goal_distance(achieved_goal, goal)
-            res = -(d > self.distance_threshold).astype(np.float32)
-            return res
+            if self.strict:
+                achieved_goal = np.reshape(achieved_goal, (-1,6))
+                goal = np.reshape(goal, (-1,6))
+
+                dist1 = goal_distance(achieved_goal[:, :3], goal[:, :3])
+                d1 =  dist1 > self.distance_threshold
+
+                dist2 = goal_distance(achieved_goal[:, 3:6], goal[:, 3:6])
+                d2 =  dist2 > self.distance_threshold
+                res = -(np.any(np.array([d1, d2]), axis=0)).astype(np.float32).flatten()
+
+                if self.sparse_dense:
+                    mask = res == 0
+                    res[mask] = (2*np.ones(mask.shape[0]) - (dist1[mask] + dist2[mask])/self.distance_threshold)/2
+
+                if len(res) == 1:
+                    res = res[0]
+            else:
+                d = goal_distance(achieved_goal, goal)
+                res = -(d > self.distance_threshold).astype(np.float32)
+
+                if self.sparse_dense:
+                    mask = res == 0
+                    res[mask] = np.ones(mask.shape[0]) - d/self.distance_threshold
+        
+        return res
 
         
 
@@ -80,26 +138,49 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
     def _get_obs(self):
         if self.task == "sideways":
-            manip1 = self.sim.data.get_site_xpos("S0_8").copy()
-            manip2 = self.sim.data.get_site_xpos("S0_0").copy()
-            achieved_goal = np.concatenate([manip1, manip2]).flatten()
+            if self.strict:
+                body_0_8 = self.sim.data.get_site_xpos("S0_8").copy()
+                body_0_0= self.sim.data.get_site_xpos("S0_0").copy()
+                body_8_8 = self.sim.data.get_site_xpos("S8_8").copy()
+                body_8_0 = self.sim.data.get_site_xpos("S8_0").copy()
+                achieved_goal = np.concatenate([body_0_8, body_0_0, body_8_8, body_8_0]).flatten()
+            else:
+                manip1 = self.sim.data.get_site_xpos("S0_8").copy()
+                manip2 = self.sim.data.get_site_xpos("S0_0").copy()
+                achieved_goal = np.concatenate([manip1, manip2]).flatten()
 
         else:
-            achieved_goal = self.sim.data.get_site_xpos("S0_0").copy()
-            #targ_pos = self.sim.data.get_site_xpos('target0').copy()
+            if self.strict:
+                body_0_0 = self.sim.data.get_site_xpos("S0_0").copy()
+                body_8_8 = self.sim.data.get_site_xpos("S8_8").copy()
+                achieved_goal = np.concatenate([body_0_0, body_8_8])
+            
+            else:
+                achieved_goal = self.sim.data.get_site_xpos("S0_0").copy()
 
 
         pos = np.array([self.sim.data.get_site_xpos(site).copy() for site in self.site_names]).flatten()
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
         vel = np.array([self.sim.data.get_site_xvelp(site).copy() for site in self.site_names]).flatten() * dt
         obs = np.concatenate([pos, vel])
-        return {
+
+        observation = {
             'observation': obs.copy(),
             'achieved_goal': achieved_goal.copy(),
-            'desired_goal': self.goal.copy(),
+            'desired_goal': self.goal.copy()
         }
+        if self.pixels:
+            image_obs = copy.deepcopy(self.sim.render(width=84, height=84, mode='offscreen'))
+            image_obs = Image.fromarray(image_obs).convert('L')
+            image_obs = np.array(image_obs) / 255
+            #print("IMG in env",image_obs)
+            #cv2.imshow('env', image_obs)
+            #cv2.waitKey(1)
+            observation['image'] = image_obs
 
-    def _viewer_setup(self):
+        return observation
+
+    def _viewer_setup_original(self):
         body_id = self.sim.model.body_name2id('B0_0')
         lookat = self.sim.data.body_xpos[body_id]
         for idx, value in enumerate(lookat):
@@ -108,15 +189,34 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.viewer.cam.azimuth = 132.
         self.viewer.cam.elevation = -14.
 
+    def _viewer_setup(self):
+        body_id = self.sim.model.body_name2id('B4_4')
+        lookat = self.sim.data.body_xpos[body_id]
+        for idx, value in enumerate(lookat):
+            self.viewer.cam.lookat[idx] = value
+
+        self.viewer.cam.distance = 0.4
+        self.viewer.cam.azimuth = 270.
+        self.viewer.cam.elevation = -40.
+
     def _render_callback(self):
         if self.task == "sideways":
             site1_id = self.sim.model.site_name2id('target0')
             site2_id = self.sim.model.site_name2id('target1')
+            site3_id = self.sim.model.site_name2id('target2')
+            site4_id = self.sim.model.site_name2id('target3')
             self.sim.model.site_pos[site1_id] = self.goal[:3]
             self.sim.model.site_pos[site2_id] = self.goal[3:6]
+            if self.strict:
+                self.sim.model.site_pos[site3_id] = self.goal[6:9]
+                self.sim.model.site_pos[site4_id] = self.goal[9:12]
+            else:
+                self.sim.model.site_pos[site3_id] = self.goal[:3]
+                self.sim.model.site_pos[site4_id] = self.goal[3:6]
+
         else:
             site_id = self.sim.model.site_name2id('target0')
-            self.sim.model.site_pos[site_id] = self.goal
+            self.sim.model.site_pos[site_id] = self.goal[:3]
         self.sim.forward()
 
     def _reset_sim(self):
@@ -125,34 +225,64 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         return True
 
     def _sample_goal(self):
-        offset = self.np_random.uniform(low=-self.noise_range, high=self.noise_range)
+        offset = self.np_random.uniform(low=-self.noise_range, high=0)
         if self.task == "sideways":
-            goal1 = self.sim.data.get_site_xpos("S8_8")
-            goal2 = self.sim.data.get_site_xpos("S8_0")
-            goal = np.concatenate([goal1 + np.array([-abs(offset),0,0]),goal2 + np.array([-abs(offset),0,0])]).flatten()
+            if self.strict:
+                goal1 = self.sim.data.get_site_xpos("S8_8").copy()
+                goal2 = self.sim.data.get_site_xpos("S8_0").copy()
+                goal = np.concatenate([goal1 + np.array([offset,0,0]),goal2 + np.array([offset,0,0]), goal1, goal2]).flatten()
+            else:
+                goal1 = self.sim.data.get_site_xpos("S8_8").copy()
+                goal2 = self.sim.data.get_site_xpos("S8_0").copy()
+                goal = np.concatenate([goal1 + np.array([offset,0,0]),goal2 + np.array([offset,0,0])]).flatten()
         else:
-            goal = self.sim.data.get_site_xpos("S8_8") + np.array([offset,offset,0])
+            if self.strict:
+                goal1 = self.sim.data.get_site_xpos("S8_8").copy() + np.array([offset,offset,0])
+                goal2 = self.sim.data.get_site_xpos("S8_8").copy()
+                goal = np.concatenate([goal1, goal2])
+                
+            else:
+                goal = self.sim.data.get_site_xpos("S8_8").copy() + np.array([offset,offset,0])
+
         return goal.copy()
 
     def _is_success(self, achieved_goal, desired_goal):
         if self.task == "sideways":
-            achieved_goal = np.reshape(achieved_goal, (-1,6))
-            goal = np.reshape(desired_goal, (-1,6))
-            d1 = goal_distance(achieved_goal[:, :3], goal[:, :3]) <= self.distance_threshold
-            d2 = goal_distance(achieved_goal[:, 3:6], goal[:, 3:6]) <= self.distance_threshold
-            res = (np.all(np.array([d1, d2]), axis=0)).astype(np.float32).flatten()
+            if self.strict:
+                achieved_goal = np.reshape(achieved_goal, (-1,12))
+                goal = np.reshape(desired_goal, (-1,12))
+                d1 = goal_distance(achieved_goal[:, :3], goal[:, :3]) <= self.distance_threshold
+                d2 = goal_distance(achieved_goal[:, 3:6], goal[:, 3:6]) <= self.distance_threshold
+                d3 = goal_distance(achieved_goal[:, 6:9], goal[:, 6:9]) <= self.distance_threshold/2
+                d4 = goal_distance(achieved_goal[:, 9:12], goal[:, 9:12]) <= self.distance_threshold/2
+                res = (np.all(np.array([d1, d2, d3, d4]), axis=0)).astype(np.float32).flatten()
+            else:
+                achieved_goal = np.reshape(achieved_goal, (-1,6))
+                goal = np.reshape(desired_goal, (-1,6))
+                d1 = goal_distance(achieved_goal[:, :3], goal[:, :3]) <= self.distance_threshold
+                d2 = goal_distance(achieved_goal[:, 3:6], goal[:, 3:6]) <= self.distance_threshold
+                res = (np.all(np.array([d1, d2]), axis=0)).astype(np.float32).flatten()
+
             if len(res) == 1:
                 res = res[0]
-            return res
         else:
-            d = goal_distance(achieved_goal, desired_goal)
-            res = (d < self.distance_threshold).astype(np.float32)
-            return res
+            if self.strict:
+                achieved_goal = np.reshape(achieved_goal, (-1,6))
+                goal = np.reshape(desired_goal, (-1,6))
+                d1 = goal_distance(achieved_goal[:, :3], goal[:, :3]) <= self.distance_threshold
+                d2 = goal_distance(achieved_goal[:, 3:6], goal[:, 3:6]) <= self.distance_threshold
+                res = (np.all(np.array([d1, d2]), axis=0)).astype(np.float32).flatten()
+                if len(res) == 1:
+                    res = res[0]
+            else:
+                d = goal_distance(achieved_goal, desired_goal)
+                res = (d < self.distance_threshold).astype(np.float32)
+        return res
 
     def _env_setup(self):
         utils.reset_mocap_welds(self.sim)
         self.sim.forward()
-        gripper_target = np.array([0, 0, 0])
+        gripper_target = np.array([0, 0, 0.01])
         gripper_rotation = np.array([1., 0., 1., 0.])
         self.sim.data.set_mocap_pos('robot0:mocap', gripper_target)
         self.sim.data.set_mocap_quat('robot0:mocap', gripper_rotation)

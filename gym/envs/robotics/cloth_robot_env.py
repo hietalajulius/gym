@@ -41,11 +41,20 @@ class ClothRobotEnv(gym.GoalEnv):
 
         obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
-        self.observation_space = spaces.Dict(dict(
-            desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-            achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-            observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
-        ))
+
+        if 'image' in obs.keys():
+            self.observation_space = spaces.Dict(dict(
+                desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
+                achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
+                observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
+                image=spaces.Box(-np.inf, np.inf, shape=obs['image'].shape, dtype='float32')
+            ))
+        else:
+            self.observation_space = spaces.Dict(dict(
+                desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
+                achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
+                observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32')
+            ))
 
     @property
     def dt(self):
@@ -69,13 +78,15 @@ class ClothRobotEnv(gym.GoalEnv):
         self._step_callback()
         obs = self._get_obs()
 
-        done = False
         info = {
             'is_success': self._is_success(obs['achieved_goal'], self.goal),
         }
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
-        #if reward == 0:
-            #print("Real sim success", reward, info)
+
+        done = False
+        if info['is_success']:
+            print("Real sim success", reward, info)
+            done = True
         return obs, reward, done, info
 
     def reset(self):
