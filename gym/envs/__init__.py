@@ -368,8 +368,22 @@ for reward_type in ['sparse', 'dense']:
     )
 
     register(
-        id='ClothReach{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothReachEnv',
+        id='ClothDiagonal{}-v1'.format(suffix),
+        entry_point='gym.envs.robotics:ClothDiagonalEnv',
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
+    register(
+        id='ClothDiagonalStrictPixels{}-v1'.format(suffix),
+        entry_point='gym.envs.robotics:ClothDiagonalStrictPixelsEnv',
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
+    register(
+        id='ClothDiagonalStrict{}-v1'.format(suffix),
+        entry_point='gym.envs.robotics:ClothDiagonalStrictEnv',
         kwargs=kwargs,
         max_episode_steps=50,
     )

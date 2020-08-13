@@ -6,6 +6,7 @@
         <texture name="texcarpet" type="2d" file="../textures/carpet.png"/>
         <texture name="mmc" type="2d" file="../textures/mm2.png"/>
         <texture name="blue" type="2d" file="../textures/blue.png"/>
+        <texture name="rg" type="2d" file="../textures/rg.png"/>
 
 
         <material name="combo" texture="texcarpet" texrepeat="100 1" texuniform="false"/>
@@ -23,6 +24,7 @@
         <material name="matcarpet" texture="texcarpet"/>
         <material name="mm" texture="mmc"/>
         <material name="blue" texture="blue"/>
+        <material name="rg" texture="rg"/>
         <!--<material name="rb" texture="rdbl"/>-->
         
         <mesh file="base_link_collision.stl" name="robot0:base_link"></mesh>

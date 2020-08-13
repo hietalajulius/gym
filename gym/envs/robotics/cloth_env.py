@@ -169,14 +169,13 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
             'achieved_goal': achieved_goal.copy(),
             'desired_goal': self.goal.copy()
         }
+        
         if self.pixels:
-            image_obs = copy.deepcopy(self.sim.render(width=84, height=84, mode='offscreen'))
-            image_obs = Image.fromarray(image_obs).convert('L')
-            image_obs = np.array(image_obs) / 255
-            #print("IMG in env",image_obs)
-            #cv2.imshow('env', image_obs)
-            #cv2.waitKey(1)
-            observation['image'] = image_obs
+            image_obs = copy.deepcopy(self.render(width=84, height=84, mode='rgb_array'))
+            cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
+            cv2.waitKey(1)
+            observation['image'] = image_obs / 255
+            print("added pixel observations")
 
         return observation
 
@@ -195,9 +194,9 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         for idx, value in enumerate(lookat):
             self.viewer.cam.lookat[idx] = value
 
-        self.viewer.cam.distance = 0.4
-        self.viewer.cam.azimuth = 270.
-        self.viewer.cam.elevation = -40.
+        self.viewer.cam.distance = 0.32
+        self.viewer.cam.azimuth = 0.
+        self.viewer.cam.elevation = -90.
 
     def _render_callback(self):
         if self.task == "sideways":

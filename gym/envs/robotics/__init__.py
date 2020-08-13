@@ -13,5 +13,8 @@ from gym.envs.robotics.hand.manipulate_touch_sensors import HandBlockTouchSensor
 from gym.envs.robotics.hand.manipulate_touch_sensors import HandEggTouchSensorsEnv
 from gym.envs.robotics.hand.manipulate_touch_sensors import HandPenTouchSensorsEnv
 
-from gym.envs.robotics.cloth.reach import ClothReachEnv
+from gym.envs.robotics.cloth.diagonal import ClothDiagonalEnv
+from gym.envs.robotics.cloth.diagonal_strict_pixels import ClothDiagonalStrictPixelsEnv
+from gym.envs.robotics.cloth.diagonal_strict import ClothDiagonalStrictEnv
+
 from gym.envs.robotics.cloth.sideways import ClothSidewaysEnv
