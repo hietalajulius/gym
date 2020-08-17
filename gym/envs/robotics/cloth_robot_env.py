@@ -15,7 +15,7 @@ except ImportError as e:
 DEFAULT_SIZE = 500
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, n_actions, n_substeps):
+    def __init__(self, model_path, n_actions, n_substeps, baselines=False):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -41,6 +41,7 @@ class ClothRobotEnv(gym.GoalEnv):
 
         obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
+        self.baselines = baselines
 
         if 'image' in obs.keys():
             self.observation_space = spaces.Dict(dict(
@@ -86,7 +87,8 @@ class ClothRobotEnv(gym.GoalEnv):
         done = False
         if info['is_success']:
             print("Real sim success", reward, info)
-            done = True
+            if not self.baselines:
+                done = True
         return obs, reward, done, info
 
     def reset(self):
@@ -97,10 +99,10 @@ class ClothRobotEnv(gym.GoalEnv):
         # configuration.
         super(ClothRobotEnv, self).reset()
         did_reset_sim = False
+        self.goal = self._sample_goal().copy()
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
         utils.enable_mocap_welds(self.sim)
-        self.goal = self._sample_goal().copy()
         obs = self._get_obs()
         return obs
 

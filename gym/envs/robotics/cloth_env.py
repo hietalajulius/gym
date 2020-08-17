@@ -17,7 +17,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
     def __init__(
         self, model_path, n_substeps, noise_range,
-        distance_threshold, n_actions, task="diagonal", strict=False, sparse_dense=False, pixels=False
+        distance_threshold, n_actions, task="diagonal", strict=False, sparse_dense=False, pixels=False, baselines=False
     ):
         """Initializes a new Fetch environment.
 
@@ -44,7 +44,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4"]
 
         super(ClothEnv, self).__init__(
-            model_path=model_path, n_substeps=n_substeps, n_actions=n_actions)
+            model_path=model_path, n_substeps=n_substeps, n_actions=n_actions, baselines=baselines)
 
     # GoalEnv methods
     # ----------------------------
@@ -172,10 +172,10 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         
         if self.pixels:
             image_obs = copy.deepcopy(self.render(width=84, height=84, mode='rgb_array'))
-            cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
-            cv2.waitKey(1)
+            #cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
+            #cv2.waitKey(1)
             observation['image'] = image_obs / 255
-            print("added pixel observations")
+            #print("added pixel observations")
 
         return observation
 
@@ -199,6 +199,13 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.viewer.cam.elevation = -90.
 
     def _render_callback(self):
+        #Resetting sites was here
+        #self.sim.forward()
+        pass
+
+    def _reset_sim(self):
+        self.sim.set_state(self.initial_state)
+
         if self.task == "sideways":
             site1_id = self.sim.model.site_name2id('target0')
             site2_id = self.sim.model.site_name2id('target1')
@@ -216,10 +223,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         else:
             site_id = self.sim.model.site_name2id('target0')
             self.sim.model.site_pos[site_id] = self.goal[:3]
-        self.sim.forward()
-
-    def _reset_sim(self):
-        self.sim.set_state(self.initial_state)
+            
         self.sim.forward()
         return True
 
