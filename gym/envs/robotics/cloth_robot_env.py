@@ -99,9 +99,10 @@ class ClothRobotEnv(gym.GoalEnv):
         # configuration.
         super(ClothRobotEnv, self).reset()
         did_reset_sim = False
-        self.goal = self._sample_goal().copy()
         while not did_reset_sim:
             did_reset_sim = self._reset_sim()
+        self.goal = self._sample_goal().copy() #Sample goal only after reset
+        #self.sim.forward()
         utils.enable_mocap_welds(self.sim)
         obs = self._get_obs()
         return obs

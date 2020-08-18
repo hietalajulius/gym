@@ -16,8 +16,8 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
     """
 
     def __init__(
-        self, model_path, n_substeps, noise_range,
-        distance_threshold, n_actions, task="diagonal", strict=False, sparse_dense=False, pixels=False, baselines=False
+        self, model_path, n_substeps,
+        distance_threshold, n_actions, noise_range=0.03, task="diagonal", strict=False, sparse_dense=False, pixels=False, baselines=False
     ):
         """Initializes a new Fetch environment.
 
@@ -42,6 +42,11 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.sparse_dense = sparse_dense
         self.distance_threshold = distance_threshold
         self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4"]
+
+        self.origin = np.array([0.12,0.12,0])
+        self.maxdist = 0.2
+        self.maximum = self.origin[0] + self.maxdist
+        self.minimum = self.origin[0] - self.maxdist
 
         super(ClothEnv, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=n_actions, baselines=baselines)
@@ -118,10 +123,19 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         return res
 
         
-
+ 
 
     # RobotEnv methods
     # ----------------------------
+
+    def set_aux_positions(self, corner1, corner2, corner3, corner4):
+        self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner1, label="corner1")
+        self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner2, label="corner2")
+        self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner3, label="corner3")
+        self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner4, label="corner4")
+
+    def clear_aux_positions(self):
+        del self.viewer._markers[:]
 
 
     def _set_action(self, action):
@@ -131,10 +145,10 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         if self.task == "sideways":
             assert action.shape == (3,)
             #grip = action[3]
-            utils.mocap_set_action_cloth(self.sim, pos_ctrl)
+            utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum)
         else:
             assert action.shape == (3,)
-            utils.mocap_set_action_cloth(self.sim, pos_ctrl)
+            utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum)
 
     def _get_obs(self):
         if self.task == "sideways":
@@ -176,7 +190,6 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
             #cv2.waitKey(1)
             observation['image'] = image_obs / 255
             #print("added pixel observations")
-
         return observation
 
     def _viewer_setup_original(self):
@@ -190,11 +203,12 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
     def _viewer_setup(self):
         body_id = self.sim.model.body_name2id('B4_4')
-        lookat = self.sim.data.body_xpos[body_id]
+        lookat = self.origin #self.sim.data.body_xpos[body_id]
+
         for idx, value in enumerate(lookat):
             self.viewer.cam.lookat[idx] = value
 
-        self.viewer.cam.distance = 0.32
+        self.viewer.cam.distance = 0.7
         self.viewer.cam.azimuth = 0.
         self.viewer.cam.elevation = -90.
 
@@ -206,11 +220,22 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
     def _reset_sim(self):
         self.sim.set_state(self.initial_state)
 
+        lim1_id = self.sim.model.site_name2id('limit0')
+        lim2_id = self.sim.model.site_name2id('limit1')
+        lim3_id = self.sim.model.site_name2id('limit2')
+        lim4_id = self.sim.model.site_name2id('limit3')
+
+        self.sim.model.site_pos[lim1_id] = self.origin + np.array([-self.maxdist,-self.maxdist,0])
+        self.sim.model.site_pos[lim2_id] = self.origin + np.array([self.maxdist,-self.maxdist,0])
+        self.sim.model.site_pos[lim3_id] = self.origin + np.array([-self.maxdist,self.maxdist,0])
+        self.sim.model.site_pos[lim4_id] = self.origin + np.array([self.maxdist,self.maxdist,0])
+
         if self.task == "sideways":
             site1_id = self.sim.model.site_name2id('target0')
             site2_id = self.sim.model.site_name2id('target1')
             site3_id = self.sim.model.site_name2id('target2')
             site4_id = self.sim.model.site_name2id('target3')
+
             self.sim.model.site_pos[site1_id] = self.goal[:3]
             self.sim.model.site_pos[site2_id] = self.goal[3:6]
             if self.strict:
