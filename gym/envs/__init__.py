@@ -410,6 +410,20 @@ for reward_type in ['sparse', 'dense']:
     )
 
     register(
+        id='ClothSidewaysStrict{}-v1'.format(suffix),
+        entry_point='gym.envs.robotics:ClothSidewaysStrictEnv',
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
+    register(
+        id='ClothSidewaysStrictPixels{}-v1'.format(suffix),
+        entry_point='gym.envs.robotics:ClothSidewaysStrictPixelsEnv',
+        kwargs=kwargs,
+        max_episode_steps=50,
+    )
+
+    register(
         id='FetchPush{}-v1'.format(suffix),
         entry_point='gym.envs.robotics:FetchPushEnv',
         kwargs=kwargs,

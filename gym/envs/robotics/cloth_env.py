@@ -157,10 +157,10 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
                 body_0_0= self.sim.data.get_site_xpos("S0_0").copy()
                 body_8_8 = self.sim.data.get_site_xpos("S8_8").copy()
                 body_8_0 = self.sim.data.get_site_xpos("S8_0").copy()
-                achieved_goal = np.concatenate([body_0_8, body_0_0, body_8_8, body_8_0]).flatten()
+                achieved_goal = np.concatenate([body_8_8, body_8_0, body_0_8, body_0_0]).flatten()
             else:
-                manip1 = self.sim.data.get_site_xpos("S0_8").copy()
-                manip2 = self.sim.data.get_site_xpos("S0_0").copy()
+                manip1 = self.sim.data.get_site_xpos("S8_8").copy()
+                manip2 = self.sim.data.get_site_xpos("S8_0").copy()
                 achieved_goal = np.concatenate([manip1, manip2]).flatten()
 
         else:
@@ -257,13 +257,13 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         offset = self.np_random.uniform(low=-self.noise_range, high=self.noise_range)
         if self.task == "sideways":
             if self.strict:
-                goal1 = self.sim.data.get_site_xpos("S8_8").copy()
-                goal2 = self.sim.data.get_site_xpos("S8_0").copy()
-                goal = np.concatenate([goal1 + np.array([offset,0,0]),goal2 + np.array([offset,0,0]), goal1, goal2]).flatten()
+                goal1 = self.sim.data.get_site_xpos("S0_8").copy()
+                goal2 = self.sim.data.get_site_xpos("S0_0").copy()
+                goal = np.concatenate([goal1 + np.array([abs(offset),0,0]),goal2 + np.array([abs(offset),0,0]), goal1, goal2]).flatten()
             else:
-                goal1 = self.sim.data.get_site_xpos("S8_8").copy()
-                goal2 = self.sim.data.get_site_xpos("S8_0").copy()
-                goal = np.concatenate([goal1 + np.array([offset,0,0]),goal2 + np.array([offset,0,0])]).flatten()
+                goal1 = self.sim.data.get_site_xpos("S0_8").copy()
+                goal2 = self.sim.data.get_site_xpos("S0_0").copy()
+                goal = np.concatenate([goal1 + np.array([abs(offset),0,0]),goal2 + np.array([abs(offset),0,0])]).flatten()
         else:
             if self.strict:
                 goal1 = self.sim.data.get_site_xpos("S0_8").copy() + np.array([offset,-offset,0])

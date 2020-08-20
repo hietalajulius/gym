@@ -20,3 +20,5 @@ from gym.envs.robotics.cloth.diagonal_strict import ClothDiagonalStrictEnv
 from gym.envs.robotics.cloth.diagonal_baselines import ClothDiagonalBaselinesEnv
 
 from gym.envs.robotics.cloth.sideways import ClothSidewaysEnv
+from gym.envs.robotics.cloth.sideways_strict import ClothSidewaysStrictEnv
+from gym.envs.robotics.cloth.sideways_strict_pixels import ClothSidewaysStrictPixelsEnv
