@@ -73,6 +73,7 @@ def mocap_set_action_cloth(sim, pos_ctrl, minimum, maximum, grip=None):
         if action[2] < 0: #Limit mocap from going under the floor
             action[2] = 0
         #TODO add limit for mocap workspace
+        #print('[',action[0],',',action[1],',', action[2],'],')
         sim.data.mocap_pos[:] = action
         if grip and grip < 0:
             remove_mocap_welds(sim)

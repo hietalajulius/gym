@@ -16,8 +16,8 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
     """
 
     def __init__(
-        self, model_path, n_substeps,
-        distance_threshold, n_actions, noise_range=0.03, task="diagonal", strict=False, sparse_dense=False, pixels=False, baselines=False
+        self, model_path, n_substeps, 
+        n_actions, distance_threshold=0.02, noise_range=0.05, task="diagonal", strict=False, sparse_dense=False, pixels=False, baselines=False
     ):
         """Initializes a new Fetch environment.
 
@@ -165,12 +165,12 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
         else:
             if self.strict:
-                body_0_0 = self.sim.data.get_site_xpos("S0_0").copy()
-                body_8_8 = self.sim.data.get_site_xpos("S8_8").copy()
-                achieved_goal = np.concatenate([body_0_0, body_8_8])
+                body_8_0 = self.sim.data.get_site_xpos("S8_0").copy()
+                body_0_8 = self.sim.data.get_site_xpos("S0_8").copy()
+                achieved_goal = np.concatenate([body_8_0, body_0_8])
             
             else:
-                achieved_goal = self.sim.data.get_site_xpos("S0_0").copy()
+                achieved_goal = self.sim.data.get_site_xpos("S8_0").copy() #Modded
 
 
         pos = np.array([self.sim.data.get_site_xpos(site).copy() for site in self.site_names]).flatten()
@@ -217,6 +217,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         #self.sim.forward()
         pass
 
+
     def _reset_sim(self):
         self.sim.set_state(self.initial_state)
 
@@ -253,7 +254,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         return True
 
     def _sample_goal(self):
-        offset = self.np_random.uniform(low=-self.noise_range, high=0)
+        offset = self.np_random.uniform(low=-self.noise_range, high=self.noise_range)
         if self.task == "sideways":
             if self.strict:
                 goal1 = self.sim.data.get_site_xpos("S8_8").copy()
@@ -265,12 +266,12 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
                 goal = np.concatenate([goal1 + np.array([offset,0,0]),goal2 + np.array([offset,0,0])]).flatten()
         else:
             if self.strict:
-                goal1 = self.sim.data.get_site_xpos("S8_8").copy() + np.array([offset,offset,0])
-                goal2 = self.sim.data.get_site_xpos("S8_8").copy()
+                goal1 = self.sim.data.get_site_xpos("S0_8").copy() + np.array([offset,-offset,0])
+                goal2 = self.sim.data.get_site_xpos("S0_8").copy()
                 goal = np.concatenate([goal1, goal2])
                 
             else:
-                goal = self.sim.data.get_site_xpos("S8_8").copy() + np.array([offset,offset,0])
+                goal = self.sim.data.get_site_xpos("S0_8").copy() + np.array([offset,-offset,0]) #Modified
 
         return goal.copy()
 
@@ -310,7 +311,8 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
     def _env_setup(self):
         utils.reset_mocap_welds(self.sim)
         self.sim.forward()
-        gripper_target = np.array([0, 0, 0.01])
+        #gripper_target = np.array([0, 0, 0.01])
+        gripper_target = self.sim.data.get_site_xpos('S8_0')
         gripper_rotation = np.array([1., 0., 1., 0.])
         self.sim.data.set_mocap_pos('robot0:mocap', gripper_target)
         self.sim.data.set_mocap_quat('robot0:mocap', gripper_rotation)
