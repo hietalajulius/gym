@@ -41,10 +41,10 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.strict = strict
         self.sparse_dense = sparse_dense
         self.distance_threshold = distance_threshold
-        self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4"]
+        self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4", 'robot']
 
         self.origin = np.array([0.12,0.12,0])
-        self.maxdist = 0.2
+        self.maxdist = 0.15
         self.maximum = self.origin[0] + self.maxdist
         self.minimum = self.origin[0] - self.maxdist
 
@@ -177,7 +177,6 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         dt = self.sim.nsubsteps * self.sim.model.opt.timestep
         vel = np.array([self.sim.data.get_site_xvelp(site).copy() for site in self.site_names]).flatten() * dt
         obs = np.concatenate([pos, vel])
-
         observation = {
             'observation': obs.copy(),
             'achieved_goal': achieved_goal.copy(),
@@ -186,10 +185,11 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         
         if self.pixels:
             image_obs = copy.deepcopy(self.render(width=84, height=84, mode='rgb_array'))
+            #image_obs = cv2.cvtColor(image_obs, cv2.COLOR_BGR2GRAY)
             #cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
             #cv2.waitKey(1)
-            observation['image'] = image_obs / 255
-            #print("added pixel observations")
+            observation['image'] = (image_obs / 255)
+            #print("added pixel observations", observation['image'].shape)
         return observation
 
     def _viewer_setup_original(self):
@@ -201,7 +201,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.viewer.cam.azimuth = 132.
         self.viewer.cam.elevation = -14.
 
-    def _viewer_setup(self):
+    def _viewer_setup_diagonal(self):
         body_id = self.sim.model.body_name2id('B4_4')
         lookat = self.origin #self.sim.data.body_xpos[body_id]
 
@@ -209,6 +209,17 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
             self.viewer.cam.lookat[idx] = value
 
         self.viewer.cam.distance = 0.7
+        self.viewer.cam.azimuth = 0.
+        self.viewer.cam.elevation = -90.
+    
+    def _viewer_setup(self):
+        body_id = self.sim.model.body_name2id('B4_4')
+        lookat = self.origin #self.sim.data.body_xpos[body_id]
+
+        for idx, value in enumerate(lookat):
+            self.viewer.cam.lookat[idx] = value
+
+        self.viewer.cam.distance = 0.5
         self.viewer.cam.azimuth = 0.
         self.viewer.cam.elevation = -90.
 

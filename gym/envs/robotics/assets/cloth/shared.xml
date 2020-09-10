@@ -7,7 +7,9 @@
         <texture name="mmc" type="2d" file="../textures/mm2.png"/>
         <texture name="blue" type="2d" file="../textures/blue.png"/>
         <texture name="rg" type="2d" file="../textures/rg.png"/>
-        <texture name="rgsideways" type="2d" file="../textures/rgsideways.png"/>
+        <texture name="rgsideways" type="2d" file="../textures/rgs.png"/>
+        <texture name="red" type="2d" file="../textures/red.png"/>
+        <texture name="white" type="2d" file="../textures/white.png"/>
 
 
         <material name="combo" texture="texcarpet" texrepeat="100 1" texuniform="false"/>
@@ -27,6 +29,8 @@
         <material name="blue" texture="blue"/>
         <material name="rg" texture="rg"/>
         <material name="rgsideways" texture="rgsideways"/>
+        <material name="red" texture="red"/>
+        <material name="white" texture="white"/>
         <!--<material name="rb" texture="rdbl"/>-->
         
         <mesh file="base_link_collision.stl" name="robot0:base_link"></mesh>
