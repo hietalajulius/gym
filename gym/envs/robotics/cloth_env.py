@@ -211,8 +211,14 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.viewer.cam.distance = 0.7
         self.viewer.cam.azimuth = 0.
         self.viewer.cam.elevation = -90.
-    
+
     def _viewer_setup(self):
+        if self.task == 'sideways':
+            self._viewer_setup_sideways()
+        else:
+            self._viewer_setup_diagonal()
+    
+    def _viewer_setup_sideways(self):
         body_id = self.sim.model.body_name2id('B4_4')
         lookat = self.origin #self.sim.data.body_xpos[body_id]
 
