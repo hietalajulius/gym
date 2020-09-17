@@ -1,3 +1,7 @@
+# Copyright 2020 (c) Aalto University - All Rights Reserved
+# Author: Julius Hietala <julius.hietala@aalto.fi>
+#
+
 import os
 import copy
 import numpy as np
@@ -15,7 +19,7 @@ except ImportError as e:
 DEFAULT_SIZE = 500
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, n_actions, n_substeps, baselines=False):
+    def __init__(self, model_path, n_actions, n_substeps):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -25,6 +29,7 @@ class ClothRobotEnv(gym.GoalEnv):
 
         model = mujoco_py.load_model_from_path(fullpath)
         self.sim = mujoco_py.MjSim(model, nsubsteps=n_substeps)
+        utils.remove_mocap_welds(self.sim)
         self.viewer = None
         self._viewers = {}
 
@@ -41,7 +46,6 @@ class ClothRobotEnv(gym.GoalEnv):
 
         obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
-        self.baselines = baselines
 
         if 'image' in obs.keys():
             self.observation_space = spaces.Dict(dict(
@@ -61,8 +65,14 @@ class ClothRobotEnv(gym.GoalEnv):
     def dt(self):
         return self.sim.model.opt.timestep * self.sim.nsubsteps
 
-    # Env methods
-    # ----------------------------
+    def set_aux_positions(self, corner1, corner2, corner3, corner4):
+        self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner1, label="corner1")
+        self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner2, label="corner2")
+        self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner3, label="corner3")
+        self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner4, label="corner4")
+
+    def clear_aux_positions(self):
+        del self.viewer._markers[:]
 
     def set_key_callback_function(self, key_callback_function):
         self.key_callback_function = key_callback_function
@@ -71,8 +81,27 @@ class ClothRobotEnv(gym.GoalEnv):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
+    def _set_action(self, action):
+        action = action.copy()  
+        pos_ctrl = action[:3]
+        pos_ctrl *= 0.05
+
+        grasp = action[3]
+        if action[3] > 0:
+            if not self.grasp_is_active:
+                body_name, dist = utils.get_closest_body_to_mocap(self.sim)
+                print("Body and dist", body_name, dist)
+                if dist < 0.023:
+                    utils.grasp(self.sim, body_name)
+                    self.grasp_is_active = True
+        else:
+            utils.remove_mocap_welds(self.sim)
+            self.grasp_is_active = False
+
+        utils.mocap_set_action_cloth(self.sim, pos_ctrl, grasp, self.minimum, self.maximum)
+
     def step(self, action):
-        #action = np.clip(action, self.action_space.low, self.action_space.high)
+        action = np.clip(action, self.action_space.low, self.action_space.high)
         action = np.array(action)
         self._set_action(action)
         self.sim.step()
@@ -87,8 +116,7 @@ class ClothRobotEnv(gym.GoalEnv):
         done = False
         if info['is_success']:
             print("Real sim success", reward, info)
-            if not self.baselines:
-                done = True
+            done = True
         return obs, reward, done, info
 
     def reset(self):
@@ -98,11 +126,10 @@ class ClothRobotEnv(gym.GoalEnv):
         # In this case, we just keep randomizing until we eventually achieve a valid initial
         # configuration.
         super(ClothRobotEnv, self).reset()
-        did_reset_sim = False
         self._reset_sim()
         self.goal = self._sample_goal().copy() #Sample goal only after reset
         self._reset_sim() #Reset again to have goals in correct place
-        utils.enable_mocap_welds(self.sim)
+        #utils.enable_mocap_welds(self.sim)
         obs = self._get_obs()
         return obs
 
@@ -113,7 +140,6 @@ class ClothRobotEnv(gym.GoalEnv):
             self._viewers = {}
 
     def render(self, mode='human', width=DEFAULT_SIZE, height=DEFAULT_SIZE):
-        self._render_callback()
         if mode == 'rgb_array':
             self._get_viewer(mode).render(width, height)
             # window size used for old mujoco-py:
@@ -134,26 +160,24 @@ class ClothRobotEnv(gym.GoalEnv):
             self._viewers[mode] = self.viewer
         return self.viewer
 
+
+    def _env_setup(self):
+        utils.reset_mocap_welds(self.sim)
+        gripper_target = self.sim.data.get_site_xpos('S8_0')
+        gripper_rotation = np.array([1., 0., 1., 0.])
+        self.sim.data.set_mocap_pos('robot0:mocap', gripper_target)
+        self.sim.data.set_mocap_quat('robot0:mocap', gripper_rotation)
+        for _ in range(10):
+            self.sim.step()
+
     # Extension methods
     # ----------------------------
 
     def _reset_sim(self):
-        """Resets a simulation and indicates whether or not it was successful.
-        If a reset was unsuccessful (e.g. if a randomized state caused an error in the
-        simulation), this method should indicate such a failure by returning False.
-        In such a case, this method will be called again to attempt a the reset again.
-        """
-        self.sim.set_state(self.initial_state)
-        self.sim.forward()
-        return True
+        raise NotImplementedError()
 
     def _get_obs(self):
         """Returns the observation.
-        """
-        raise NotImplementedError()
-
-    def _set_action(self, action):
-        """Applies the given action to the simulation.
         """
         raise NotImplementedError()
 
@@ -167,21 +191,9 @@ class ClothRobotEnv(gym.GoalEnv):
         """
         raise NotImplementedError()
 
-    def _env_setup(self):
-        """Initial configuration of the environment. Can be used to configure initial state
-        and extract information from the simulation.
-        """
-        pass
-
     def _viewer_setup(self):
         """Initial configuration of the viewer. Can be used to set the camera position,
         for example.
-        """
-        pass
-
-    def _render_callback(self):
-        """A custom callback that is called before rendering. Can be used
-        to implement custom visualizations.
         """
         pass
 

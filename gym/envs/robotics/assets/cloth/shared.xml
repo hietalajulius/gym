@@ -54,32 +54,97 @@
     </asset>
 
     <equality>
-        <!--<weld body1="robot0:mocap" body2="robot0:gripper_link" solimp="0.9 0.95 0.001" solref="0.02 1"></weld> -->
+        <weld body1="robot0:mocap" body2="B0_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B0_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B0_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B0_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B0_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B0_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B0_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B0_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B0_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+
+        <weld body1="robot0:mocap" body2="B1_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B1_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B1_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B1_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B1_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B1_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B1_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B1_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B1_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+
+        <weld body1="robot0:mocap" body2="B2_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B2_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B2_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B2_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B2_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B2_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B2_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B2_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B2_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+
+        <weld body1="robot0:mocap" body2="B3_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B3_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B3_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B3_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B3_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B3_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B3_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B3_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B3_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+
+        <weld body1="robot0:mocap" body2="B4_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B4_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B4_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B4_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B4_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B4_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B4_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B4_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B4_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+
+        <weld body1="robot0:mocap" body2="B5_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B5_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B5_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B5_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B5_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B5_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B5_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B5_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B5_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+
+        <weld body1="robot0:mocap" body2="B6_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B6_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B6_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B6_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B6_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B6_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B6_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B6_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B6_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+
+        <weld body1="robot0:mocap" body2="B7_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B7_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B7_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B7_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B7_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B7_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B7_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B7_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B7_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+
         <weld body1="robot0:mocap" body2="B8_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_5" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        
+
     </equality>
     
-    <!--<contact>
-        <exclude body1="robot0:r_gripper_finger_link" body2="robot0:l_gripper_finger_link"></exclude>
-        <exclude body1="robot0:torso_lift_link" body2="robot0:torso_fixed_link"></exclude>
-        <exclude body1="robot0:torso_lift_link" body2="robot0:shoulder_pan_link"></exclude> 
-    </contact> -->
-    
-    <!--<default>
-        <default class="robot0:fetch">
-            <geom margin="0.001" material="robot0:geomMat" rgba="1 1 1 1" solimp="0.99 0.99 0.01" solref="0.01 1" type="mesh" user="0"></geom>
-            <joint armature="1" damping="50" frictionloss="0" stiffness="0"></joint>
-            
-            <default class="robot0:fetchGripper">
-                <geom condim="4" margin="0.001" type="box" user="0" rgba="0.356 0.361 0.376 1.0"></geom>
-                <joint armature="100" damping="1000" limited="true" solimplimit="0.99 0.999 0.01" solreflimit="0.01 1" type="slide"></joint>
-            </default>
-
-            <default class="robot0:grey">
-                <geom rgba="0.356 0.361 0.376 1.0"></geom>
-            </default>
-            <default class="robot0:blue">
-                <geom rgba="0.086 0.506 0.767 1.0"></geom>
-            </default>
-        </default>
-    </default> -->
 </mujoco>
