@@ -35,7 +35,6 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.maxdist = 0.15
         self.maximum = self.origin[0] + self.maxdist
         self.minimum = self.origin[0] - self.maxdist
-        self.grasp_is_active = False
 
         super(ClothEnv, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=n_actions)
@@ -164,7 +163,8 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
 
     def _reset_sim(self):
-        utils.reset_mocap_position(self.sim, self.origin)
+        mocap_beginning = self.sim.data.get_site_xpos('S8_0').copy() + np.random.randint(-10,10,3)/300
+        utils.reset_mocap_position(self.sim, mocap_beginning)
         self.sim.set_state(self.initial_state)
 
         lim1_id = self.sim.model.site_name2id('limit0')

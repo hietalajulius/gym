@@ -43,6 +43,7 @@ class ClothRobotEnv(gym.GoalEnv):
         self.initial_state = copy.deepcopy(self.sim.get_state())
         self.goal = self._sample_goal()
         self.key_callback_function = None
+        self.grasp_is_active = False
 
         obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
@@ -90,7 +91,6 @@ class ClothRobotEnv(gym.GoalEnv):
         if action[3] > 0:
             if not self.grasp_is_active:
                 body_name, dist = utils.get_closest_body_to_mocap(self.sim)
-                print("Body and dist", body_name, dist)
                 if dist < 0.023:
                     utils.grasp(self.sim, body_name)
                     self.grasp_is_active = True
@@ -125,7 +125,27 @@ class ClothRobotEnv(gym.GoalEnv):
         # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
         # In this case, we just keep randomizing until we eventually achieve a valid initial
         # configuration.
-        super(ClothRobotEnv, self).reset()
+        #print("dofs", self.sim.model.dof_jntid)
+        #print("self sim", dir(self.sim.model))
+        #print("geoms", self.sim.model.geom_names)
+        '''
+        for geom_name in self.sim.model.geom_names:
+            if "G" in geom_name:
+                geom_id = self.sim.model.geom_name2id(geom_name)
+                self.sim.model.geom_size[geom_id] += 0.001
+        
+        for idx, joint_name in enumerate(self.sim.model.joint_names):
+            joint_id = self.sim.model.joint_name2id(joint_name)
+            self.sim.model.jnt_stiffness[joint_id] += 0.1
+            self.sim.model.dof_damping[joint_id] += 0.1
+        for idx, tendon_name in enumerate(self.sim.model.tendon_names):
+            tendon_id = self.sim.model.tendon_name2id(tendon_name)
+            self.sim.model.tendon_stiffness[tendon_id] += 0.1
+            self.sim.model.tendon_damping[tendon_id] += 0.1
+        '''
+
+
+        #super(ClothRobotEnv, self).reset()
         self._reset_sim()
         self.goal = self._sample_goal().copy() #Sample goal only after reset
         self._reset_sim() #Reset again to have goals in correct place
@@ -163,10 +183,6 @@ class ClothRobotEnv(gym.GoalEnv):
 
     def _env_setup(self):
         utils.reset_mocap_welds(self.sim)
-        gripper_target = self.sim.data.get_site_xpos('S8_0')
-        gripper_rotation = np.array([1., 0., 1., 0.])
-        self.sim.data.set_mocap_pos('robot0:mocap', gripper_target)
-        self.sim.data.set_mocap_quat('robot0:mocap', gripper_rotation)
         for _ in range(10):
             self.sim.step()
 
