@@ -2,7 +2,7 @@ import os
 from gym import utils
 from gym.envs.robotics import cloth_env
 
-MODEL_XML_PATH = os.path.join('cloth', 'sideways.xml')
+MODEL_XML_PATH = os.path.join('cloth', 'cloth.xml')
 
 
 class ClothSidewaysEnv(cloth_env.ClothEnv, utils.EzPickle):

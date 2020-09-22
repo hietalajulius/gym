@@ -180,18 +180,9 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         if self.task == "sideways":
             site1_id = self.sim.model.site_name2id('target0')
             site2_id = self.sim.model.site_name2id('target1')
-            site3_id = self.sim.model.site_name2id('target2')
-            site4_id = self.sim.model.site_name2id('target3')
 
             self.sim.model.site_pos[site1_id] = self.goal[:3]
             self.sim.model.site_pos[site2_id] = self.goal[3:6]
-            if self.strict:
-                self.sim.model.site_pos[site3_id] = self.goal[6:9]
-                self.sim.model.site_pos[site4_id] = self.goal[9:12]
-            else:
-                self.sim.model.site_pos[site3_id] = self.goal[:3]
-                self.sim.model.site_pos[site4_id] = self.goal[3:6]
-
         else:
             site_id = self.sim.model.site_name2id('target0')
             self.sim.model.site_pos[site_id] = self.goal[:3]
