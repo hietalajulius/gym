@@ -38,12 +38,18 @@ class ClothRobotEnv(gym.GoalEnv):
             'video.frames_per_second': int(np.round(1.0 / self.dt))
         }
 
+        self.grasp_is_active = False
+        self.origin = np.array([0.12,0.12,0])
+        self.maxdist = 0.15
+        self.maximum = self.origin[0] + self.maxdist
+        self.minimum = self.origin[0] - self.maxdist
+
         self.seed()
         self._env_setup()
         self.initial_state = copy.deepcopy(self.sim.get_state())
         self.goal = self._sample_goal()
+        self.mocap_beginning = self.sim.data.get_site_xpos('S8_0').copy()
         self.key_callback_function = None
-        self.grasp_is_active = False
 
         obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
@@ -145,11 +151,9 @@ class ClothRobotEnv(gym.GoalEnv):
         '''
 
 
-        #super(ClothRobotEnv, self).reset()
         self._reset_sim()
         self.goal = self._sample_goal().copy() #Sample goal only after reset
-        self._reset_sim() #Reset again to have goals in correct place
-        #utils.enable_mocap_welds(self.sim)
+        self._reset_view() #Set goal sites based on sampled goal
         obs = self._get_obs()
         return obs
 
@@ -183,13 +187,28 @@ class ClothRobotEnv(gym.GoalEnv):
 
     def _env_setup(self):
         utils.reset_mocap_welds(self.sim)
+        lim1_id = self.sim.model.site_name2id('limit0')
+        lim2_id = self.sim.model.site_name2id('limit1')
+        lim3_id = self.sim.model.site_name2id('limit2')
+        lim4_id = self.sim.model.site_name2id('limit3')
+
+        self.sim.model.site_pos[lim1_id] = self.origin + np.array([-self.maxdist,-self.maxdist,0])
+        self.sim.model.site_pos[lim2_id] = self.origin + np.array([self.maxdist,-self.maxdist,0])
+        self.sim.model.site_pos[lim3_id] = self.origin + np.array([-self.maxdist,self.maxdist,0])
+        self.sim.model.site_pos[lim4_id] = self.origin + np.array([self.maxdist,self.maxdist,0])
         for _ in range(10):
             self.sim.step()
 
-    # Extension methods
-    # ----------------------------
-
     def _reset_sim(self):
+        self.grasp_is_active = False
+        utils.remove_mocap_welds(self.sim)
+        self.sim.set_state(self.initial_state)
+        mocap_beginning = self.mocap_beginning + np.random.randint(-10,10,3)/300
+        utils.reset_mocap_position(self.sim, mocap_beginning)
+
+        self.sim.forward()
+
+    def _reset_view(self):
         raise NotImplementedError()
 
     def _get_obs(self):

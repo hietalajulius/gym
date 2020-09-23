@@ -21,7 +21,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
     def __init__(
         self, model_path, n_substeps, 
-        n_actions, distance_threshold=0.02, noise_range=0.05, task="diagonal", strict=False, pixels=False
+        n_actions, distance_threshold=0.03, noise_range=0.02, task="diagonal", strict=False, pixels=False
     ):
 
         self.noise_range = noise_range
@@ -30,11 +30,6 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.strict = strict
         self.distance_threshold = distance_threshold
         self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4", 'robot']
-
-        self.origin = np.array([0.12,0.12,0])
-        self.maxdist = 0.15
-        self.maximum = self.origin[0] + self.maxdist
-        self.minimum = self.origin[0] - self.maxdist
 
         super(ClothEnv, self).__init__(
             model_path=model_path, n_substeps=n_substeps, n_actions=n_actions)
@@ -160,23 +155,8 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.viewer.cam.distance = 0.5
         self.viewer.cam.azimuth = 0.
         self.viewer.cam.elevation = -90.
-
-
-    def _reset_sim(self):
-        mocap_beginning = self.sim.data.get_site_xpos('S8_0').copy() + np.random.randint(-10,10,3)/300
-        utils.reset_mocap_position(self.sim, mocap_beginning)
-        self.sim.set_state(self.initial_state)
-
-        lim1_id = self.sim.model.site_name2id('limit0')
-        lim2_id = self.sim.model.site_name2id('limit1')
-        lim3_id = self.sim.model.site_name2id('limit2')
-        lim4_id = self.sim.model.site_name2id('limit3')
-
-        self.sim.model.site_pos[lim1_id] = self.origin + np.array([-self.maxdist,-self.maxdist,0])
-        self.sim.model.site_pos[lim2_id] = self.origin + np.array([self.maxdist,-self.maxdist,0])
-        self.sim.model.site_pos[lim3_id] = self.origin + np.array([-self.maxdist,self.maxdist,0])
-        self.sim.model.site_pos[lim4_id] = self.origin + np.array([self.maxdist,self.maxdist,0])
-
+    
+    def _reset_view(self):
         if self.task == "sideways":
             site1_id = self.sim.model.site_name2id('target0')
             site2_id = self.sim.model.site_name2id('target1')
@@ -186,9 +166,9 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         else:
             site_id = self.sim.model.site_name2id('target0')
             self.sim.model.site_pos[site_id] = self.goal[:3]
-            
+
         self.sim.forward()
-        return True
+
 
     def _sample_goal(self):
         offset = self.np_random.uniform(low=0, high=self.noise_range)
