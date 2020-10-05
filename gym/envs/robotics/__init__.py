@@ -17,6 +17,7 @@ from gym.envs.robotics.cloth.diagonal import ClothDiagonalEnv
 from gym.envs.robotics.cloth.diagonal_strict_pixels import ClothDiagonalStrictPixelsEnv
 from gym.envs.robotics.cloth.diagonal_pixels import ClothDiagonalPixelsEnv
 from gym.envs.robotics.cloth.diagonal_strict import ClothDiagonalStrictEnv
+from gym.envs.robotics.cloth.diagonal_strict_learn_grasp import ClothDiagonalStrictLearnGraspEnv
 
 from gym.envs.robotics.cloth.sideways import ClothSidewaysEnv
 from gym.envs.robotics.cloth.sideways_strict import ClothSidewaysStrictEnv

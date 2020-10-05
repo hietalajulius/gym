@@ -21,7 +21,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
     def __init__(
         self, model_path, n_substeps, 
-        n_actions, distance_threshold=0.03, noise_range=0.02, task="diagonal", strict=False, pixels=False
+        n_actions, learn_grasp=True, distance_threshold=0.05, noise_range=0.02, task="diagonal", strict=False, pixels=False
     ):
 
         self.noise_range = noise_range
@@ -32,7 +32,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4", 'robot']
 
         super(ClothEnv, self).__init__(
-            model_path=model_path, n_substeps=n_substeps, n_actions=n_actions)
+            model_path=model_path, n_substeps=n_substeps, n_actions=n_actions, learn_grasp=learn_grasp)
 
 
     def compute_reward(self, achieved_goal, goal, info):

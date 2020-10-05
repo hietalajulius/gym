@@ -19,26 +19,30 @@ except ImportError as e:
 DEFAULT_SIZE = 500
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, n_actions, n_substeps):
+    def __init__(self, model_path, n_actions, n_substeps, learn_grasp):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
             fullpath = os.path.join(os.path.dirname(__file__), 'assets', model_path)
         if not os.path.exists(fullpath):
             raise IOError('File {} does not exist'.format(fullpath))
+        
+        assert (n_actions == 3 and not learn_grasp) or (n_actions == 4 and learn_grasp)
 
         model = mujoco_py.load_model_from_path(fullpath)
         self.sim = mujoco_py.MjSim(model, nsubsteps=n_substeps)
-        utils.remove_mocap_welds(self.sim)
+        self.learn_grasp = learn_grasp
+        if self.learn_grasp:
+            utils.remove_mocap_welds(self.sim)
+            self.grasp_is_active = False
+
         self.viewer = None
         self._viewers = {}
-
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
             'video.frames_per_second': int(np.round(1.0 / self.dt))
         }
 
-        self.grasp_is_active = False
         self.origin = np.array([0.12,0.12,0])
         self.maxdist = 0.15
         self.maximum = self.origin[0] + self.maxdist
@@ -93,18 +97,19 @@ class ClothRobotEnv(gym.GoalEnv):
         pos_ctrl = action[:3]
         pos_ctrl *= 0.05
 
-        grasp = action[3]
-        if action[3] > 0:
-            if not self.grasp_is_active:
-                body_name, dist = utils.get_closest_body_to_mocap(self.sim)
-                if dist < 0.023:
-                    utils.grasp(self.sim, body_name)
-                    self.grasp_is_active = True
-        else:
-            utils.remove_mocap_welds(self.sim)
-            self.grasp_is_active = False
+        if self.learn_grasp:
+            grasp = action[3]
+            if grasp > 0:
+                if not self.grasp_is_active:
+                    body_name, dist = utils.get_closest_body_to_mocap(self.sim)
+                    if dist < 0.023:
+                        utils.grasp(self.sim, body_name)
+                        self.grasp_is_active = True
+            else:
+                utils.remove_mocap_welds(self.sim)
+                self.grasp_is_active = False
 
-        utils.mocap_set_action_cloth(self.sim, pos_ctrl, grasp, self.minimum, self.maximum)
+        utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum)
 
     def step(self, action):
         action = np.clip(action, self.action_space.low, self.action_space.high)
@@ -200,10 +205,12 @@ class ClothRobotEnv(gym.GoalEnv):
             self.sim.step()
 
     def _reset_sim(self):
-        self.grasp_is_active = False
-        utils.remove_mocap_welds(self.sim)
+        if self.learn_grasp:
+            self.grasp_is_active = False
+            utils.remove_mocap_welds(self.sim)
+
         self.sim.set_state(self.initial_state)
-        mocap_beginning = self.mocap_beginning + np.random.randint(-10,10,3)/300
+        mocap_beginning = self.mocap_beginning # + np.random.randint(-10,10,3)/300
         utils.reset_mocap_position(self.sim, mocap_beginning)
 
         self.sim.forward()

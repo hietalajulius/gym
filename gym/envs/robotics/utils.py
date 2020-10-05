@@ -36,7 +36,7 @@ def ctrl_set_action(sim, action):
                 idx = sim.model.jnt_qposadr[sim.model.actuator_trnid[i, 0]]
                 sim.data.ctrl[i] = sim.data.qpos[idx] + action[i]
 
-def mocap_set_action_cloth(sim, pos_ctrl, grasp, minimum, maximum):
+def mocap_set_action_cloth(sim, pos_ctrl, minimum, maximum):
     """The action controls the robot using mocaps. Specifically, bodies
     on the robot (for example the gripper wrist) is controlled with
     mocap bodies. In this case the action is the desired difference
