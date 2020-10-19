@@ -36,6 +36,11 @@ def ctrl_set_action(sim, action):
                 idx = sim.model.jnt_qposadr[sim.model.actuator_trnid[i, 0]]
                 sim.data.ctrl[i] = sim.data.qpos[idx] + action[i]
 
+def franka_ctrl_set_action(sim, action):
+    if sim.data.ctrl is not None:
+        for i in range(action.shape[0]):
+            sim.data.ctrl[i] = action[i]
+
 def mocap_set_action_cloth(sim, pos_ctrl, minimum, maximum):
     """The action controls the robot using mocaps. Specifically, bodies
     on the robot (for example the gripper wrist) is controlled with
@@ -54,6 +59,15 @@ def mocap_set_action_cloth(sim, pos_ctrl, minimum, maximum):
             action[2] = 0
         sim.data.mocap_pos[:] = action
 
+def increase_mocap_position(sim, position_increase):
+    action = sim.data.mocap_pos.copy() + position_increase.copy()
+    sim.data.mocap_pos[:] = action
+    #sim.forward()
+
+def set_mocap_position(sim, position):
+    sim.data.mocap_pos[:] = position.copy()
+    sim.forward()
+
 def reset_mocap_welds(sim):
     """Resets the mocap welds that we use for actuation.
     """
@@ -71,6 +85,13 @@ def remove_mocap_welds(sim):
         for i in range(sim.model.eq_data.shape[0]):
             if sim.model.eq_type[i] == mujoco_py.const.EQ_WELD:
                 sim.model.eq_active[i] = False
+    sim.forward()
+
+def enable_mocap_welds(sim):
+    if sim.model.nmocap > 0 and sim.model.eq_data is not None:
+        for i in range(sim.model.eq_data.shape[0]):
+            if sim.model.eq_type[i] == mujoco_py.const.EQ_WELD:
+                sim.model.eq_active[i] = True
     sim.forward()
 
 def grasp(sim, body_name):
@@ -94,10 +115,6 @@ def get_closest_body_to_mocap(sim):
     min_idx = np.argmin(dists)
     return body_names[min_idx], dists[min_idx]
 
-
-def reset_mocap_position(sim, position):
-    sim.data.mocap_pos[:] = position
-
     
 
 def reset_mocap2body_xpos(sim):
@@ -110,13 +127,12 @@ def reset_mocap2body_xpos(sim):
         sim.model.eq_obj2id is None):
         return
 
-    for eq_type, obj1_id, obj2_id, eq_active in zip(sim.model.eq_type,
+    for eq_type, obj1_id, obj2_id, eq_active, eq_data in zip(sim.model.eq_type,
                                          sim.model.eq_obj1id,
                                          sim.model.eq_obj2id,
-                                         sim.model.eq_active):
+                                         sim.model.eq_active,
+                                         sim.model.eq_data):
         if eq_type != mujoco_py.const.EQ_WELD:
-            continue
-        if not eq_active:
             continue
 
 
@@ -129,6 +145,34 @@ def reset_mocap2body_xpos(sim):
             mocap_id = sim.model.body_mocapid[obj2_id]
             body_idx = obj1_id
 
-        assert (mocap_id != -1)
-        sim.data.mocap_pos[mocap_id][:] = sim.data.body_xpos[body_idx]
+        #assert (mocap_id != -1)
+        if not mocap_id == -1:
+            sim.data.mocap_pos[mocap_id][:] = sim.data.body_xpos[body_idx]
         #sim.data.mocap_quat[mocap_id][:] = sim.data.body_xquat[body_idx]
+        
+    #sim.forward()
+
+def disable_mocap_weld(sim, body1, body2):
+    body1_id = sim.model.body_name2id(body1)
+    body2_id = sim.model.body_name2id(body2)
+
+    for i, (eq_type, obj1_id, obj2_id) in enumerate(zip(sim.model.eq_type, sim.model.eq_obj1id, sim.model.eq_obj2id)):
+        if eq_type != mujoco_py.const.EQ_WELD:
+            continue
+
+        if (obj1_id == body1_id and obj2_id == body2_id) or (obj2_id == body1_id and obj1_id == body2_id):
+            sim.model.eq_active[i] = False
+
+def enable_mocap_weld(sim, body1, body2):
+    body1_id = sim.model.body_name2id(body1)
+    body2_id = sim.model.body_name2id(body2)
+
+    for i, (eq_type, obj1_id, obj2_id) in enumerate(zip(sim.model.eq_type, sim.model.eq_obj1id, sim.model.eq_obj2id)):
+        if eq_type != mujoco_py.const.EQ_WELD:
+            continue
+
+        if (obj1_id == body1_id and obj2_id == body2_id) or (obj2_id == body1_id and obj1_id == body2_id):
+            sim.model.eq_data[i, :] = np.array(
+                    [0., 0., 0., 1., 0., 0., 0.])
+            sim.model.eq_active[i] = True
+            

@@ -22,3 +22,6 @@ from gym.envs.robotics.cloth.diagonal_strict_learn_grasp import ClothDiagonalStr
 from gym.envs.robotics.cloth.sideways import ClothSidewaysEnv
 from gym.envs.robotics.cloth.sideways_strict import ClothSidewaysStrictEnv
 from gym.envs.robotics.cloth.sideways_strict_pixels import ClothSidewaysStrictPixelsEnv
+
+from gym.envs.robotics.franka_env import FrankaEnv
+

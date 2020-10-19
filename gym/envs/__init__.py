@@ -368,6 +368,13 @@ for reward_type in ['sparse', 'dense']:
     )
 
     register(
+        id='Franka{}-v1'.format(suffix),
+        entry_point='gym.envs.robotics:FrankaEnv',
+        kwargs=kwargs,
+        max_episode_steps=100000,
+    )
+
+    register(
         id='ClothDiagonal{}-v1'.format(suffix),
         entry_point='gym.envs.robotics:ClothDiagonalEnv',
         kwargs=kwargs,

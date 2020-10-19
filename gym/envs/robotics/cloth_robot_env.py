@@ -30,7 +30,8 @@ class ClothRobotEnv(gym.GoalEnv):
         assert (n_actions == 3 and not learn_grasp) or (n_actions == 4 and learn_grasp)
 
         model = mujoco_py.load_model_from_path(fullpath)
-        self.sim = mujoco_py.MjSim(model, nsubsteps=n_substeps)
+        self.sim = mujoco_py.MjSim(model, nsubsteps=1)
+        self.n_substeps = n_substeps
         self.learn_grasp = learn_grasp
         if self.learn_grasp:
             utils.remove_mocap_welds(self.sim)
@@ -74,7 +75,7 @@ class ClothRobotEnv(gym.GoalEnv):
 
     @property
     def dt(self):
-        return self.sim.model.opt.timestep * self.sim.nsubsteps
+        return self.sim.model.opt.timestep * self.n_substeps
 
     def set_aux_positions(self, corner1, corner2, corner3, corner4):
         self.viewer.add_marker(size=np.array([.001, .001, .001]),pos=corner1, label="corner1")
@@ -111,11 +112,17 @@ class ClothRobotEnv(gym.GoalEnv):
 
         utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum)
 
+    def _take_substeps(self):
+        for _ in range(self.n_substeps):
+            #print("Took substep", step)
+            self.sim.step()
+
     def step(self, action):
-        action = np.clip(action, self.action_space.low, self.action_space.high)
+        #action = np.clip(action, self.action_space.low, self.action_space.high)
         action = np.array(action)
         self._set_action(action)
-        self.sim.step()
+        self._take_substeps()
+        #self.sim.step()
         self._step_callback()
         obs = self._get_obs()
 
@@ -202,7 +209,8 @@ class ClothRobotEnv(gym.GoalEnv):
         self.sim.model.site_pos[lim3_id] = self.origin + np.array([-self.maxdist,self.maxdist,0])
         self.sim.model.site_pos[lim4_id] = self.origin + np.array([self.maxdist,self.maxdist,0])
         for _ in range(10):
-            self.sim.step()
+            self._take_substeps()
+            #self.sim.step()
 
     def _reset_sim(self):
         if self.learn_grasp:

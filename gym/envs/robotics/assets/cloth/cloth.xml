@@ -7,6 +7,9 @@
 	</option>
 
 	<include file="shared.xml"></include>
+	<sensor>
+		<accelerometer site="S8_0" />
+	</sensor>
 	
 	<worldbody>
 		<geom name="floor0" pos="0 0 0" friction="2 2 0.001" size="0.85 0.7 1" type="plane" condim="6"></geom>

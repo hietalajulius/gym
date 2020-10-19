@@ -112,8 +112,10 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
 
         pos = np.array([self.sim.data.get_site_xpos(site).copy() for site in self.site_names]).flatten()
-        dt = self.sim.nsubsteps * self.sim.model.opt.timestep
+        dt = self.n_substeps * self.sim.model.opt.timestep #Change this
         vel = np.array([self.sim.data.get_site_xvelp(site).copy() for site in self.site_names]).flatten() * dt
+
+        #print("Acc Values", self.sim.data.sensordata)
         obs = np.concatenate([pos, vel])
         observation = {
             'observation': obs.copy(),
