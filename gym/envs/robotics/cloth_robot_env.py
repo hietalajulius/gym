@@ -118,7 +118,7 @@ class ClothRobotEnv(gym.GoalEnv):
             self.sim.step()
 
     def step(self, action):
-        #action = np.clip(action, self.action_space.low, self.action_space.high)
+        action = np.clip(action, self.action_space.low, self.action_space.high)
         action = np.array(action)
         self._set_action(action)
         self._take_substeps()
@@ -152,20 +152,34 @@ class ClothRobotEnv(gym.GoalEnv):
                 geom_id = self.sim.model.geom_name2id(geom_name)
                 self.sim.model.geom_size[geom_id] += 0.001
         
-        for idx, joint_name in enumerate(self.sim.model.joint_names):
-            joint_id = self.sim.model.joint_name2id(joint_name)
-            self.sim.model.jnt_stiffness[joint_id] += 0.1
-            self.sim.model.dof_damping[joint_id] += 0.1
-        for idx, tendon_name in enumerate(self.sim.model.tendon_names):
-            tendon_id = self.sim.model.tendon_name2id(tendon_name)
-            self.sim.model.tendon_stiffness[tendon_id] += 0.1
-            self.sim.model.tendon_damping[tendon_id] += 0.1
-        '''
 
+        for _, joint_name in enumerate(self.sim.model.joint_names):
+            joint_id = self.sim.model.joint_name2id(joint_name)
+            print("joint vals: ", self.sim.model.jnt_stiffness[joint_id], self.sim.model.dof_damping[joint_id])
+        for _, tendon_name in enumerate(self.sim.model.tendon_names):
+            tendon_id = self.sim.model.tendon_name2id(tendon_name)
+            print("tendon vals: ", self.sim.model.tendon_stiffness[tendon_id], self.sim.model.tendon_damping[tendon_id])
+        '''
 
         self._reset_sim()
         self.goal = self._sample_goal().copy() #Sample goal only after reset
         self._reset_view() #Set goal sites based on sampled goal
+
+        jnt_stiff = np.random.uniform(0.00001, 0.03)
+        jnt_damp = np.random.uniform(0.00001, 0.03)
+        ten_stiff = np.random.uniform(0.00001, 0.03)
+        ten_damp = np.random.uniform(0.00001, 0.03)
+
+        for _, joint_name in enumerate(self.sim.model.joint_names):
+            joint_id = self.sim.model.joint_name2id(joint_name)
+            self.sim.model.jnt_stiffness[joint_id] = jnt_stiff
+            self.sim.model.dof_damping[joint_id] = jnt_damp
+        for _, tendon_name in enumerate(self.sim.model.tendon_names):
+            tendon_id = self.sim.model.tendon_name2id(tendon_name)
+            self.sim.model.tendon_stiffness[tendon_id] = ten_stiff
+            self.sim.model.tendon_damping[tendon_id] = ten_damp
+        
+
         obs = self._get_obs()
         return obs
 
@@ -219,7 +233,7 @@ class ClothRobotEnv(gym.GoalEnv):
 
         self.sim.set_state(self.initial_state)
         mocap_beginning = self.mocap_beginning # + np.random.randint(-10,10,3)/300
-        utils.reset_mocap_position(self.sim, mocap_beginning)
+        utils.set_mocap_position(self.sim, mocap_beginning)
 
         self.sim.forward()
 
