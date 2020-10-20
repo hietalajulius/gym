@@ -367,69 +367,7 @@ for reward_type in ['sparse', 'dense']:
         max_episode_steps=50,
     )
 
-    register(
-        id='Franka{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:FrankaEnv',
-        kwargs=kwargs,
-        max_episode_steps=100000,
-    )
-
-    register(
-        id='ClothDiagonal{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothDiagonalEnv',
-        kwargs=kwargs,
-        max_episode_steps=50,
-    )
-
-    register(
-        id='ClothDiagonalPixels{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothDiagonalPixelsEnv',
-        kwargs=kwargs,
-        max_episode_steps=50,
-    )
-
-    register(
-        id='ClothDiagonalBaselines{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothDiagonalBaselinesEnv',
-        kwargs=kwargs,
-        max_episode_steps=50,
-    )
-
-    register(
-        id='ClothDiagonalStrictPixels{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothDiagonalStrictPixelsEnv',
-        kwargs=kwargs,
-        max_episode_steps=50,
-    )
-
-    register(
-        id='ClothDiagonalStrict{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothDiagonalStrictEnv',
-        kwargs=kwargs,
-        max_episode_steps=100,
-    )
-
-    register(
-        id='ClothSideways{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothSidewaysEnv',
-        kwargs=kwargs,
-        max_episode_steps=50,
-    )
-
-    register(
-        id='ClothSidewaysStrict{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothSidewaysStrictEnv',
-        kwargs=kwargs,
-        max_episode_steps=100,
-    )
-
-    register(
-        id='ClothSidewaysStrictPixels{}-v1'.format(suffix),
-        entry_point='gym.envs.robotics:ClothSidewaysStrictPixelsEnv',
-        kwargs=kwargs,
-        max_episode_steps=50,
-    )
-
+    
     register(
         id='FetchPush{}-v1'.format(suffix),
         entry_point='gym.envs.robotics:FetchPushEnv',
@@ -636,6 +574,22 @@ for reward_type in ['sparse', 'dense']:
         kwargs=_merge({'target_position': 'random', 'target_rotation': 'xyz', 'touch_get_obs': 'sensordata'}, kwargs),
         max_episode_steps=100,
     )
+
+#Cloth envs
+
+register(
+    id='Franka-v1',
+    entry_point='gym.envs.robotics:FrankaEnv'
+)
+
+
+register(
+    id='Cloth-v1',
+    entry_point='gym.envs.robotics:ClothEnv'
+)
+
+
+    
 
 # Atari
 # ----------------------------------------

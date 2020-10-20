@@ -19,7 +19,7 @@ except ImportError as e:
 DEFAULT_SIZE = 500
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, n_actions, n_substeps, learn_grasp):
+    def __init__(self, model_path, n_actions, n_substeps, learn_grasp, randomize_params):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -33,6 +33,7 @@ class ClothRobotEnv(gym.GoalEnv):
         self.sim = mujoco_py.MjSim(model, nsubsteps=1)
         self.n_substeps = n_substeps
         self.learn_grasp = learn_grasp
+        self.randomize_params = randomize_params
         if self.learn_grasp:
             utils.remove_mocap_welds(self.sim)
             self.grasp_is_active = False
@@ -165,20 +166,21 @@ class ClothRobotEnv(gym.GoalEnv):
         self.goal = self._sample_goal().copy() #Sample goal only after reset
         self._reset_view() #Set goal sites based on sampled goal
 
-        jnt_stiff = np.random.uniform(0.00001, 0.03)
-        jnt_damp = np.random.uniform(0.00001, 0.03)
-        ten_stiff = np.random.uniform(0.00001, 0.03)
-        ten_damp = np.random.uniform(0.00001, 0.03)
 
-        for _, joint_name in enumerate(self.sim.model.joint_names):
-            joint_id = self.sim.model.joint_name2id(joint_name)
-            self.sim.model.jnt_stiffness[joint_id] = jnt_stiff
-            self.sim.model.dof_damping[joint_id] = jnt_damp
-        for _, tendon_name in enumerate(self.sim.model.tendon_names):
-            tendon_id = self.sim.model.tendon_name2id(tendon_name)
-            self.sim.model.tendon_stiffness[tendon_id] = ten_stiff
-            self.sim.model.tendon_damping[tendon_id] = ten_damp
-        
+        if self.randomize_params:
+            jnt_stiff = np.random.uniform(0.00001, 0.03)
+            jnt_damp = np.random.uniform(0.00001, 0.03)
+            ten_stiff = np.random.uniform(0.00001, 0.03)
+            ten_damp = np.random.uniform(0.00001, 0.03)
+            for _, joint_name in enumerate(self.sim.model.joint_names):
+                joint_id = self.sim.model.joint_name2id(joint_name)
+                self.sim.model.jnt_stiffness[joint_id] = jnt_stiff
+                self.sim.model.dof_damping[joint_id] = jnt_damp
+            for _, tendon_name in enumerate(self.sim.model.tendon_names):
+                tendon_id = self.sim.model.tendon_name2id(tendon_name)
+                self.sim.model.tendon_stiffness[tendon_id] = ten_stiff
+                self.sim.model.tendon_damping[tendon_id] = ten_damp
+            
 
         obs = self._get_obs()
         return obs

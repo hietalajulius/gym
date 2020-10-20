@@ -20,8 +20,9 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
     """
 
     def __init__(
-        self, model_path, n_substeps, 
-        n_actions, learn_grasp=True, distance_threshold=0.03, noise_range=0.02, task="diagonal", strict=False, pixels=False
+        self, model_path, task, n_actions, learn_grasp,
+        n_substeps=40, distance_threshold=0.05,
+        noise_range=0.02, strict=False, pixels=False, randomize_params=False
     ):
 
         self.noise_range = noise_range
@@ -32,7 +33,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4", 'robot']
 
         super(ClothEnv, self).__init__(
-            model_path=model_path, n_substeps=n_substeps, n_actions=n_actions, learn_grasp=learn_grasp)
+            model_path=model_path, n_substeps=n_substeps, n_actions=n_actions, learn_grasp=learn_grasp, randomize_params=randomize_params)
 
 
     def compute_reward(self, achieved_goal, goal, info):
@@ -128,7 +129,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
             #image_obs = cv2.cvtColor(image_obs, cv2.COLOR_BGR2GRAY)
             #cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
             #cv2.waitKey(1)
-            observation['image'] = (image_obs / 255)
+            observation['image'] = (image_obs / 255).flatten()
             #print("added pixel observations", observation['image'].shape)
         return observation
 
