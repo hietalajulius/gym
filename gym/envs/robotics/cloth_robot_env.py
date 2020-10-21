@@ -39,6 +39,7 @@ class ClothRobotEnv(gym.GoalEnv):
             self.grasp_is_active = False
 
         self.viewer = None
+        self.key_callback_function = None
         self._viewers = {}
         self.metadata = {
             'render.modes': ['human', 'rgb_array'],
@@ -55,7 +56,7 @@ class ClothRobotEnv(gym.GoalEnv):
         self.initial_state = copy.deepcopy(self.sim.get_state())
         self.goal = self._sample_goal()
         self.mocap_beginning = self.sim.data.get_site_xpos('S8_0').copy()
-        self.key_callback_function = None
+        
 
         obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
@@ -115,7 +116,6 @@ class ClothRobotEnv(gym.GoalEnv):
 
     def _take_substeps(self):
         for _ in range(self.n_substeps):
-            #print("Took substep", step)
             self.sim.step()
 
     def step(self, action):
@@ -123,7 +123,6 @@ class ClothRobotEnv(gym.GoalEnv):
         action = np.array(action)
         self._set_action(action)
         self._take_substeps()
-        #self.sim.step()
         self._step_callback()
         obs = self._get_obs()
 
@@ -215,6 +214,7 @@ class ClothRobotEnv(gym.GoalEnv):
 
     def _env_setup(self):
         utils.reset_mocap_welds(self.sim)
+        utils.reset_mocap2body_xpos(self.sim)
         lim1_id = self.sim.model.site_name2id('limit0')
         lim2_id = self.sim.model.site_name2id('limit1')
         lim3_id = self.sim.model.site_name2id('limit2')
@@ -226,7 +226,6 @@ class ClothRobotEnv(gym.GoalEnv):
         self.sim.model.site_pos[lim4_id] = self.origin + np.array([self.maxdist,self.maxdist,0])
         for _ in range(10):
             self._take_substeps()
-            #self.sim.step()
 
     def _reset_sim(self):
         if self.learn_grasp:
