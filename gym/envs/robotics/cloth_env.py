@@ -20,9 +20,8 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
     """
 
     def __init__(
-        self, model_path, task, n_actions, learn_grasp,
-        n_substeps=40, distance_threshold=0.05,
-        noise_range=0.02, strict=False, pixels=False, randomize_params=False
+        self, model_path, task, n_actions, learn_grasp, distance_threshold, strict, pixels,
+        n_substeps=40, noise_range=0.02, randomize_params=False
     ):
 
         self.noise_range = noise_range
