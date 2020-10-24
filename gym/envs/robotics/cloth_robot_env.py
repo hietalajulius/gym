@@ -19,7 +19,7 @@ except ImportError as e:
 DEFAULT_SIZE = 500
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, n_actions, n_substeps, learn_grasp, randomize_params, uniform_jnt_tend, pixels, max_advance):
+    def __init__(self, model_path, n_actions, n_substeps, learn_grasp, randomize_params, uniform_jnt_tend, pixels, max_advance, limit_workspace, start_grasped):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -27,7 +27,7 @@ class ClothRobotEnv(gym.GoalEnv):
         if not os.path.exists(fullpath):
             raise IOError('File {} does not exist'.format(fullpath))
         
-        assert (n_actions == 3 and not learn_grasp) or (n_actions == 4 and learn_grasp)
+        #assert (n_actions == 3 and not learn_grasp) or (n_actions == 4 and learn_grasp)
 
         model = mujoco_py.load_model_from_path(fullpath)
         self.sim = mujoco_py.MjSim(model, nsubsteps=1)
@@ -35,6 +35,7 @@ class ClothRobotEnv(gym.GoalEnv):
         self.max_advance = max_advance
         self.n_substeps = n_substeps
         self.learn_grasp = learn_grasp
+        self.start_grasped = start_grasped
         self.randomize_params = randomize_params
         self.uniform_jnt_tend = uniform_jnt_tend
         if self.learn_grasp:
@@ -49,6 +50,7 @@ class ClothRobotEnv(gym.GoalEnv):
             'video.frames_per_second': int(np.round(1.0 / self.dt))
         }
 
+        self.limit_workspace = limit_workspace
         self.origin = np.array([0.12,0.12,0])
         self.maxdist = 0.15
         self.maximum = self.origin[0] + self.maxdist #What is this
@@ -58,11 +60,16 @@ class ClothRobotEnv(gym.GoalEnv):
         self.max_damping = 0.2
         self.min_stiffness = 0.0001
         self.max_stiffness = 1
-        self.current_joint_stiffness = 0.1
-        self.current_joint_damping = 0.1
-        self.current_tendon_stiffness = 0.1
-        self.current_tendon_damping = 0.1
-        self.set_joint_tendon_params()
+
+        self.min_geom_size = 0.005
+        self.max_geom_size = 0.011
+        self.current_geom_size = self.min_geom_size
+
+        self.current_joint_stiffness = self.min_stiffness
+        self.current_joint_damping = self.min_damping
+        self.current_tendon_stiffness = self.min_stiffness
+        self.current_tendon_damping = self.min_damping
+        self.set_joint_tendon_geom_params()
         
         #Adjust params before this
         self.seed()
@@ -129,8 +136,15 @@ class ClothRobotEnv(gym.GoalEnv):
             else:
                 utils.remove_mocap_welds(self.sim)
                 self.grasp_is_active = False
-
-        utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum)
+        
+        if self.start_grasped:
+            grasp = action[3]
+            if grasp < 0:
+                utils.remove_mocap_welds(self.sim)
+            else:
+                utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum, self.origin, self.limit_workspace)
+        else:
+            utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum, self.origin, self.limit_workspace)
 
     def _take_substeps(self):
         for _ in range(self.n_substeps):
@@ -156,7 +170,12 @@ class ClothRobotEnv(gym.GoalEnv):
             done = True
         return obs, reward, done, info
 
-    def set_joint_tendon_params(self):
+    def set_joint_tendon_geom_params(self):
+        for geom_name in self.sim.model.geom_names:
+                if "G" in geom_name:
+                    geom_id = self.sim.model.geom_name2id(geom_name)
+                    self.sim.model.geom_size[geom_id] = self.current_geom_size
+
         for _, joint_name in enumerate(self.sim.model.joint_names):
             joint_id = self.sim.model.joint_name2id(joint_name)
             self.sim.model.jnt_stiffness[joint_id] = self.current_joint_stiffness
@@ -206,6 +225,8 @@ class ClothRobotEnv(gym.GoalEnv):
         if self.randomize_params:
             self.current_joint_stiffness = np.random.uniform(self.min_stiffness, self.max_stiffness)
             self.current_joint_damping = np.random.uniform(self.min_damping, self.max_damping)
+            self.current_geom_size = np.random.uniform(self.min_geom_size, self.max_geom_size)
+
             if self.uniform_jnt_tend:
                 self.current_tendon_stiffness = self.current_joint_stiffness 
                 self.current_tendon_damping = self.current_joint_damping
@@ -213,7 +234,7 @@ class ClothRobotEnv(gym.GoalEnv):
                 self.current_tendon_stiffness = np.random.uniform(self.min_stiffness, self.max_stiffness)
                 self.current_tendon_damping = np.random.uniform(self.min_damping, self.max_damping)
 
-            self.set_joint_tendon_params()
+            self.set_joint_tendon_geom_params()
             self.sim.forward()
 
 
@@ -255,6 +276,10 @@ class ClothRobotEnv(gym.GoalEnv):
         lim3_id = self.sim.model.site_name2id('limit2')
         lim4_id = self.sim.model.site_name2id('limit3')
 
+        #workspace_id = self.sim.model.geom_name2id("workspace")
+        #print("origin", self.origin)
+        #self.sim.model.geom_pos[workspace_id] = np.array([5,5,5])
+
         self.sim.model.site_pos[lim1_id] = self.origin + np.array([-self.maxdist,-self.maxdist,0])
         self.sim.model.site_pos[lim2_id] = self.origin + np.array([self.maxdist,-self.maxdist,0])
         self.sim.model.site_pos[lim3_id] = self.origin + np.array([-self.maxdist,self.maxdist,0])
@@ -275,6 +300,9 @@ class ClothRobotEnv(gym.GoalEnv):
             mocap_beginning = self.mocap_beginning
 
         utils.set_mocap_position(self.sim, mocap_beginning)
+        if self.start_grasped:
+            utils.reset_mocap_welds(self.sim)
+            utils.enable_mocap_welds(self.sim)
         self.sim.forward()
 
     def _reset_view(self):

@@ -20,18 +20,22 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
     """
 
     def __init__(
-        self, model_path, task, n_actions, learn_grasp, distance_threshold, strict, pixels, randomize_params, uniform_jnt_tend,
-        n_substeps=40, noise_range=0.02, max_advance=0.05
+        self, model_path, task, n_actions, learn_grasp, distance_threshold, strict, pixels,
+        n_substeps=40, noise_range=0.02, randomize_params=False, uniform_jnt_tend=False, start_grasped=False, max_advance=0.03
     ):
 
         self.noise_range = noise_range
         self.task = task
+        if self.task == "sideways":
+            limit_workspace = True
+        else:
+            limit_workspace = False
         self.strict = strict
         self.distance_threshold = distance_threshold
         self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4", 'robot']
 
         super(ClothEnv, self).__init__(
-            model_path=model_path, n_substeps=n_substeps, n_actions=n_actions, learn_grasp=learn_grasp, randomize_params=randomize_params, uniform_jnt_tend=uniform_jnt_tend, pixels=pixels, max_advance=max_advance)
+            model_path=model_path, n_substeps=n_substeps, n_actions=n_actions, learn_grasp=learn_grasp, randomize_params=randomize_params, uniform_jnt_tend=uniform_jnt_tend, pixels=pixels, max_advance=max_advance, limit_workspace=limit_workspace, start_grasped=start_grasped)
 
 
     def compute_reward(self, achieved_goal, goal, info):
@@ -120,7 +124,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         robot_vel = self.sim.data.get_site_xvelp('robot').copy() * dt
         robot_obs = np.concatenate([robot_pos, robot_vel])
 
-        model_params = np.array([self.current_joint_stiffness, self.current_joint_damping, self.current_tendon_stiffness, self.current_tendon_damping])
+        model_params = np.array([self.current_joint_stiffness, self.current_joint_damping, self.current_tendon_stiffness, self.current_tendon_damping, self.current_geom_size])
         observation = {
             'observation': obs.copy(),
             'achieved_goal': achieved_goal.copy(),
@@ -130,10 +134,11 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         }
         
         if self.pixels:
-            image_obs = copy.deepcopy(self.render(width=84, height=84, mode='rgb_array'))
-            #image_obs = cv2.cvtColor(image_obs, cv2.COLOR_BGR2GRAY)
+            image_obs = self.render(width=200, height=200, mode='rgb_array').copy()
+            image_obs = cv2.cvtColor(image_obs, cv2.COLOR_BGR2GRAY)
+            cv2.imshow('env', image_obs)
             #cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
-            #cv2.waitKey(1)
+            cv2.waitKey(1)
             observation['image'] = (image_obs / 255).flatten()
         return observation
 
@@ -159,7 +164,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         for idx, value in enumerate(lookat):
             self.viewer.cam.lookat[idx] = value
 
-        self.viewer.cam.distance = 0.5
+        self.viewer.cam.distance = 0.45
         self.viewer.cam.azimuth = 0.
         self.viewer.cam.elevation = -90.
     

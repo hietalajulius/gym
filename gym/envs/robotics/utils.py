@@ -41,7 +41,7 @@ def franka_ctrl_set_action(sim, action):
         for i in range(action.shape[0]):
             sim.data.ctrl[i] = action[i]
 
-def mocap_set_action_cloth(sim, pos_ctrl, minimum, maximum):
+def mocap_set_action_cloth(sim, pos_ctrl, minimum, maximum, origin, limit_workspace):
     """The action controls the robot using mocaps. Specifically, bodies
     on the robot (for example the gripper wrist) is controlled with
     mocap bodies. In this case the action is the desired difference
@@ -55,6 +55,9 @@ def mocap_set_action_cloth(sim, pos_ctrl, minimum, maximum):
         action = sim.data.mocap_pos + pos_ctrl[:3]
         action = action.flatten()
         action = np.clip(action, minimum, maximum)
+        if limit_workspace:
+            y = np.clip(action[1], minimum, 0.18)
+            action = np.array([action[0], y, action[2]])
         if action[2] < 0: #Limit mocap from going under the floor
             action[2] = 0
         sim.data.mocap_pos[:] = action
