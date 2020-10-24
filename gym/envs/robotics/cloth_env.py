@@ -20,8 +20,8 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
     """
 
     def __init__(
-        self, model_path, task, n_actions, learn_grasp, distance_threshold, strict, pixels,
-        n_substeps=40, noise_range=0.02, randomize_params=False, uniform_jnt_tend=False, start_grasped=False, max_advance=0.03
+        self, model_path, task, n_actions, learn_grasp, distance_threshold, strict, pixels, max_advance, start_grasped, randomize_params,
+        n_substeps=40, noise_range=0.03, uniform_jnt_tend=True
     ):
 
         self.noise_range = noise_range
@@ -134,11 +134,11 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         }
         
         if self.pixels:
-            image_obs = self.render(width=200, height=200, mode='rgb_array').copy()
+            image_obs = self.render(width=140, height=140, mode='rgb_array').copy()
             image_obs = cv2.cvtColor(image_obs, cv2.COLOR_BGR2GRAY)
-            cv2.imshow('env', image_obs)
+            #cv2.imshow('env', image_obs)
             #cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
-            cv2.waitKey(1)
+            #cv2.waitKey(1)
             observation['image'] = (image_obs / 255).flatten()
         return observation
 

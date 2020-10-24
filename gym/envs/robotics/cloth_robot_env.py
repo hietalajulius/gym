@@ -188,7 +188,7 @@ class ClothRobotEnv(gym.GoalEnv):
 
 
     def reset(self):
-        print("GPU", 'gpu' in str(mujoco_py.cymj).split('/')[-1])
+        #print("GPU", 'gpu' in str(mujoco_py.cymj).split('/')[-1])
         # Attempt to reset the simulator. Since we randomize initial conditions, it
         # is possible to get into a state with numerical issues (e.g. due to penetration or
         # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
