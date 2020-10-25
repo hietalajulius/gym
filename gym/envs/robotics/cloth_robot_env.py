@@ -19,7 +19,7 @@ except ImportError as e:
 DEFAULT_SIZE = 500
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, n_actions, n_substeps, learn_grasp, randomize_params, uniform_jnt_tend, pixels, max_advance, limit_workspace, start_grasped):
+    def __init__(self, model_path, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, max_advance, random_seed):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -27,20 +27,15 @@ class ClothRobotEnv(gym.GoalEnv):
         if not os.path.exists(fullpath):
             raise IOError('File {} does not exist'.format(fullpath))
         
-        #assert (n_actions == 3 and not learn_grasp) or (n_actions == 4 and learn_grasp)
-
         model = mujoco_py.load_model_from_path(fullpath)
         self.sim = mujoco_py.MjSim(model, nsubsteps=1)
         self.pixels = pixels
         self.max_advance = max_advance
         self.n_substeps = n_substeps
-        self.learn_grasp = learn_grasp
-        self.start_grasped = start_grasped
+        
         self.randomize_params = randomize_params
+        self.randomize_geoms = randomize_geoms
         self.uniform_jnt_tend = uniform_jnt_tend
-        if self.learn_grasp:
-            utils.remove_mocap_welds(self.sim)
-            self.grasp_is_active = False
 
         self.viewer = None
         self.key_callback_function = None
@@ -50,7 +45,6 @@ class ClothRobotEnv(gym.GoalEnv):
             'video.frames_per_second': int(np.round(1.0 / self.dt))
         }
 
-        self.limit_workspace = limit_workspace
         self.origin = np.array([0.12,0.12,0])
         self.maxdist = 0.15
         self.maximum = self.origin[0] + self.maxdist #What is this
@@ -61,7 +55,7 @@ class ClothRobotEnv(gym.GoalEnv):
         self.min_stiffness = 0.0001
         self.max_stiffness = 1
 
-        self.min_geom_size = 0.005
+        self.min_geom_size = 0.004
         self.max_geom_size = 0.011
         self.current_geom_size = self.min_geom_size
 
@@ -69,10 +63,14 @@ class ClothRobotEnv(gym.GoalEnv):
         self.current_joint_damping = self.min_damping
         self.current_tendon_stiffness = self.min_stiffness
         self.current_tendon_damping = self.min_damping
-        self.set_joint_tendon_geom_params()
+        
+        if self.randomize_params:
+            self.set_joint_tendon_params()
+        if self.randomize_geoms:
+            self.set_geom_params()
         
         #Adjust params before this
-        self.seed()
+        self.seed(random_seed)
         self._env_setup()
         self.initial_state = copy.deepcopy(self.sim.get_state())
         self.goal = self._sample_goal()
@@ -80,7 +78,7 @@ class ClothRobotEnv(gym.GoalEnv):
         
 
         obs = self._get_obs()
-        self.action_space = spaces.Box(-1., 1., shape=(n_actions,), dtype='float32')
+        self.action_space = spaces.Box(-1., 1., shape=(3,), dtype='float32')
 
         if self.pixels:
             self.observation_space = spaces.Dict(dict(
@@ -124,27 +122,7 @@ class ClothRobotEnv(gym.GoalEnv):
         action = action.copy()  
         pos_ctrl = action[:3]
         pos_ctrl *= self.max_advance
-
-        if self.learn_grasp:
-            grasp = action[3]
-            if grasp > 0:
-                if not self.grasp_is_active:
-                    body_name, dist = utils.get_closest_body_to_mocap(self.sim)
-                    if dist < 0.023:
-                        utils.grasp(self.sim, body_name)
-                        self.grasp_is_active = True
-            else:
-                utils.remove_mocap_welds(self.sim)
-                self.grasp_is_active = False
-        
-        if self.start_grasped:
-            grasp = action[3]
-            if grasp < 0:
-                utils.remove_mocap_welds(self.sim)
-            else:
-                utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum, self.origin, self.limit_workspace)
-        else:
-            utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum, self.origin, self.limit_workspace)
+        utils.mocap_set_action_cloth(self.sim, pos_ctrl, self.minimum, self.maximum)
 
     def _take_substeps(self):
         for _ in range(self.n_substeps):
@@ -170,12 +148,13 @@ class ClothRobotEnv(gym.GoalEnv):
             done = True
         return obs, reward, done, info
 
-    def set_joint_tendon_geom_params(self):
+    def set_geom_params(self):
         for geom_name in self.sim.model.geom_names:
                 if "G" in geom_name:
                     geom_id = self.sim.model.geom_name2id(geom_name)
                     self.sim.model.geom_size[geom_id] = self.current_geom_size
 
+    def set_joint_tendon_params(self):
         for _, joint_name in enumerate(self.sim.model.joint_names):
             joint_id = self.sim.model.joint_name2id(joint_name)
             self.sim.model.jnt_stiffness[joint_id] = self.current_joint_stiffness
@@ -188,55 +167,29 @@ class ClothRobotEnv(gym.GoalEnv):
 
 
     def reset(self):
-        print("GPU", 'gpu' in str(mujoco_py.cymj).split('/')[-1])
-        # Attempt to reset the simulator. Since we randomize initial conditions, it
-        # is possible to get into a state with numerical issues (e.g. due to penetration or
-        # Gimbel lock) or we may not achieve an initial condition (e.g. an object is within the hand).
-        # In this case, we just keep randomizing until we eventually achieve a valid initial
-        # configuration.
-        #print("dofs", self.sim.model.dof_jntid)
-        #print("self sim", dir(self.sim.model))
-        #print("geoms", self.sim.model.geom_names)
-        '''
-        for geom_name in self.sim.model.geom_names:
-            if "G" in geom_name:
-                geom_id = self.sim.model.geom_name2id(geom_name)
-                self.sim.model.geom_size[geom_id] += 0.001
-        
-        '''
-        '''
-        for i, joint_name in enumerate(self.sim.model.joint_names):
-            if i == 1:
-                break
-            joint_id = self.sim.model.joint_name2id(joint_name)
-            print("joint vals: ", self.sim.model.jnt_stiffness[joint_id], self.sim.model.dof_damping[joint_id])
-        for i, tendon_name in enumerate(self.sim.model.tendon_names):
-            if i == 1:
-                break
-            tendon_id = self.sim.model.tendon_name2id(tendon_name)
-            print("tendon vals: ", self.sim.model.tendon_stiffness[tendon_id], self.sim.model.tendon_damping[tendon_id])
-        '''
-        
-
         self._reset_sim()
         self.goal = self._sample_goal().copy() #Sample goal only after reset
         self._reset_view() #Set goal sites based on sampled goal
 
         if self.randomize_params:
-            self.current_joint_stiffness = np.random.uniform(self.min_stiffness, self.max_stiffness)
-            self.current_joint_damping = np.random.uniform(self.min_damping, self.max_damping)
-            self.current_geom_size = np.random.uniform(self.min_geom_size, self.max_geom_size)
+            self.current_joint_stiffness = self.np_random.uniform(self.min_stiffness, self.max_stiffness)
+            self.current_joint_damping = self.np_random.uniform(self.min_damping, self.max_damping)
 
             if self.uniform_jnt_tend:
                 self.current_tendon_stiffness = self.current_joint_stiffness 
                 self.current_tendon_damping = self.current_joint_damping
             else:
-                self.current_tendon_stiffness = np.random.uniform(self.min_stiffness, self.max_stiffness)
-                self.current_tendon_damping = np.random.uniform(self.min_damping, self.max_damping)
+                self.current_tendon_stiffness = self.np_random.uniform(self.min_stiffness, self.max_stiffness)
+                self.current_tendon_damping = self.np_random.uniform(self.min_damping, self.max_damping)
 
-            self.set_joint_tendon_geom_params()
+            self.set_joint_tendon_params()
+
+        if self.randomize_geoms:
+            self.current_geom_size = self.np_random.uniform(self.min_geom_size, self.max_geom_size)
+            self.set_geom_params()
+
+        if self.randomize_geoms or self.randomize_params:
             self.sim.forward()
-
 
         obs = self._get_obs()
         return obs
@@ -276,33 +229,18 @@ class ClothRobotEnv(gym.GoalEnv):
         lim3_id = self.sim.model.site_name2id('limit2')
         lim4_id = self.sim.model.site_name2id('limit3')
 
-        #workspace_id = self.sim.model.geom_name2id("workspace")
-        #print("origin", self.origin)
-        #self.sim.model.geom_pos[workspace_id] = np.array([5,5,5])
-
         self.sim.model.site_pos[lim1_id] = self.origin + np.array([-self.maxdist,-self.maxdist,0])
         self.sim.model.site_pos[lim2_id] = self.origin + np.array([self.maxdist,-self.maxdist,0])
         self.sim.model.site_pos[lim3_id] = self.origin + np.array([-self.maxdist,self.maxdist,0])
         self.sim.model.site_pos[lim4_id] = self.origin + np.array([self.maxdist,self.maxdist,0])
+
         for _ in range(10):
             self._take_substeps()
 
     def _reset_sim(self):
-        if self.learn_grasp:
-            self.grasp_is_active = False
-            utils.remove_mocap_welds(self.sim)
-
         self.sim.set_state(self.initial_state)
-
-        if self.learn_grasp:
-            mocap_beginning = self.mocap_beginning + np.random.randint(-10,10,3)/300
-        else:
-            mocap_beginning = self.mocap_beginning
-
+        mocap_beginning = self.mocap_beginning
         utils.set_mocap_position(self.sim, mocap_beginning)
-        if self.start_grasped:
-            utils.reset_mocap_welds(self.sim)
-            utils.enable_mocap_welds(self.sim)
         self.sim.forward()
 
     def _reset_view(self):
