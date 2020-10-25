@@ -174,7 +174,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         for idx, value in enumerate(lookat):
             self.viewer.cam.lookat[idx] = value
 
-        self.viewer.cam.distance = 0.45
+        self.viewer.cam.distance = 0.37
         self.viewer.cam.azimuth = 0.
         self.viewer.cam.elevation = -90.
     

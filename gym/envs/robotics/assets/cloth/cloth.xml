@@ -27,17 +27,17 @@
 		<include file="robot.xml"></include>
 
 		<body pos="0.135 0.135 0">
-            <composite type="grid" count="9 9 1" spacing="0.03" >
-                    <joint kind="main" damping="0.05" stiffness="1"/> <!--Params adjusted in code-->
-                    <tendon width="0.001" kind="shear" damping="0.05" stiffness="1" /> <!--Params adjusted in code-->
+            <composite type="grid" count="9 9 1" spacing="0.025" >
+                    <joint kind="main" damping="0.1" stiffness="1"/> <!--Params adjusted in code-->
+                    <tendon width="0.001" kind="shear" damping="0.1" stiffness="1" /> <!--Params adjusted in code-->
                     <skin material="rgsideways" texcoord="true" inflate="0.0002" subgrid="2"/>
                     <geom type="capsule" size="0.01" rgba=".8 .2 .1 1" mass="0.008" condim="6" friction="2 2 2" />
             </composite>
 		</body>
-		<!--
-		<composite prefix="p" type="grid" count="9 9 1" spacing="0.03" >
-                    <joint kind="main" damping="0.001" stiffness="0.01"/>
-                    <tendon width="0.001" kind="shear" damping="0.001" stiffness="0.01" />
+		
+		<!--<composite prefix="p" type="grid" count="9 9 1" spacing="0.025" >
+                    <joint kind="main" damping="0.05" stiffness="0.1"/>
+                    <tendon width="0.001" kind="shear" damping="0.05" stiffness="0.1" />
                     <skin material="rgsideways" texcoord="true" inflate="0.0002" subgrid="2"/>
                     <geom type="capsule" size="0.01" rgba=".8 .2 .1 1" mass="0.008" condim="6" friction="2 2 2" />
             </composite> -->

@@ -46,13 +46,14 @@ class ClothRobotEnv(gym.GoalEnv):
         }
 
         self.origin = np.array([0.12,0.12,0])
-        self.maxdist = 0.15
+        self.maxdist = 0.13
         self.maximum = self.origin[0] + self.maxdist #What is this
         self.minimum = self.origin[0] - self.maxdist #What is this
 
-        self.min_damping = 0.001
+        self.min_damping = 0.01
         self.max_damping = 0.05
-        self.min_stiffness = 0.01
+
+        self.min_stiffness = 0.1
         self.max_stiffness = 1
 
         self.min_geom_size = 0.004

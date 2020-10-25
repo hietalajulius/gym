@@ -6,10 +6,11 @@
 		<geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.1" size="0.005 1 0.001" type="box"></geom>
 		<geom conaffinity="0" contype="0" pos="0 0 0" rgba="0 0.5 0 0.1" size="0.005 0.005 1" type="box"></geom>-->
 	</body>
-	<!--<body mocap="true" name="robot1:mocap" pos="0.26 0 0.02">
+	<!--
+	<body mocap="true" name="robot1:mocap" pos="0.26 0 0.02">
 		<geom name="robot1:mocap" conaffinity="0" contype="0" pos="0 0 0" rgba="0 0 1 1" size="0.005 0.005 0.005" type="box"></geom>
 		<site name="robot1"/>
-	</body>-->
+	</body> -->
 </mujoco>
 	<!--
 	<body childclass="robot0:fetch" name="robot0:base_link" pos="0.2869 0.2641 0">
