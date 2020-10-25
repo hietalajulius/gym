@@ -50,9 +50,9 @@ class ClothRobotEnv(gym.GoalEnv):
         self.maximum = self.origin[0] + self.maxdist #What is this
         self.minimum = self.origin[0] - self.maxdist #What is this
 
-        self.min_damping = 0.0001
-        self.max_damping = 0.2
-        self.min_stiffness = 0.0001
+        self.min_damping = 0.001
+        self.max_damping = 0.05
+        self.min_stiffness = 0.01
         self.max_stiffness = 1
 
         self.min_geom_size = 0.004
