@@ -18,12 +18,13 @@ import math
 DEFAULT_SIZE = 500
 
 class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
-    def __init__(self, reward_type=None, mocap_control=True):
+    def __init__(self, task, distance_threshold, strict, pixels, randomize_params, randomize_geoms, max_advance, random_seed,
+        image_size=84, rgb=True, n_substeps=40, noise_range=0.02, uniform_jnt_tend=True, debug_render=False, reward_type=None, mocap_control=True):
         self.mocap_control = mocap_control
         if self.mocap_control:
-            model = mujoco_py.load_model_from_path("/Users/juliushietala/Desktop/robotics/franka_sim/franka_cloth_mocap.xml")
+            model = mujoco_py.load_model_from_path("../../franka_sim/franka_cloth_mocap.xml")
         else:
-            model = mujoco_py.load_model_from_path("/Users/juliushietala/Desktop/robotics/franka_sim/franka_cloth_ctrl.xml")
+            model = mujoco_py.load_model_from_path("../../franka_sim/franka_cloth_ctrl.xml")
         self.sim = mujoco_py.MjSim(model, nsubsteps=1)
         self.n_substeps = 40
 
@@ -44,6 +45,7 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
         self.joint_names = np.array(["panda0_joint" + str(name_idx) for name_idx in range(1,8)])
         self.vel_sensor_names = np.array([joint_name + "_vel_sensor" for joint_name in self.joint_names])
         self.pos_sensor_names = np.array([joint_name + "_pos_sensor" for joint_name in self.joint_names])
+        self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4", 'robot']
 
         self.end_effector_vel_limit = 1.7
         self.end_effector_acc_limit = 13
@@ -83,13 +85,17 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
                 desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
                 achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
                 observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
+                robot_observation=spaces.Box(-np.inf, np.inf, shape=obs['robot_observation'].shape, dtype='float32'),
+                model_params=spaces.Box(-np.inf, np.inf, shape=obs['model_params'].shape, dtype='float32'),
                 image=spaces.Box(-np.inf, np.inf, shape=obs['image'].shape, dtype='float32')
             ))
         else:
             self.observation_space = spaces.Dict(dict(
                 desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
                 achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-                observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32')
+                observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
+                robot_observation=spaces.Box(-np.inf, np.inf, shape=obs['robot_observation'].shape, dtype='float32'),
+                model_params=spaces.Box(-np.inf, np.inf, shape=obs['model_params'].shape, dtype='float32')
             ))
 
     @property
@@ -129,7 +135,7 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
 
             ee_moves = self.initial_EE_position - self.sim.data.get_site_xpos("end_effector_site").copy()
 
-            print(ee_moves[0] ,ee_moves[1] , ee_moves[2], )
+            #print(ee_moves[0] ,ee_moves[1] , ee_moves[2], )
             
 
 
@@ -261,18 +267,49 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
         self.sim.forward()
 
     def _get_obs(self):
+
+        body_0_8 = self.sim.data.get_site_xpos("S0_8").copy()
+        body_0_0= self.sim.data.get_site_xpos("S0_0").copy()
+        body_8_8 = self.sim.data.get_site_xpos("S8_8").copy()
+        body_8_0 = self.sim.data.get_site_xpos("S8_0").copy()
+        achieved_goal = np.concatenate([body_8_8, body_8_0, body_0_8, body_0_0]).flatten()
+
+
+
+        pos = np.array([self.sim.data.get_site_xpos(site).copy() for site in self.site_names]).flatten()
+        dt = self.n_substeps * self.sim.model.opt.timestep
+        vel = np.array([self.sim.data.get_site_xvelp(site).copy() for site in self.site_names]).flatten() * dt
+
+        obs = np.concatenate([pos, vel])
+
+        robot_pos = self.sim.data.get_site_xpos('robot').copy()
+        robot_vel = self.sim.data.get_site_xvelp('robot').copy() * dt
+        robot_obs = np.concatenate([robot_pos, robot_vel])
+        model_params = np.array([0])
+
         observation = {
-            'observation': np.array([0,0,0]),
-            'achieved_goal': np.array([0,0,0]),
-            'desired_goal': np.array([0,0,0])
+            'observation': obs.copy(),
+            'achieved_goal': achieved_goal.copy(),
+            'desired_goal': self.goal.copy(),
+            'model_params': model_params.copy(),
+            'robot_observation' : robot_obs
         }
+        
+        image_obs = copy.deepcopy(self.render(width=84, height=84, mode='rgb_array'))
+        observation['image'] = (image_obs / 255).flatten()
+        if False:
+            print("Image obs", image_obs)
+            cv2.imshow('env', image_obs)
+            cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
+            cv2.waitKey(1)
         return observation
+        
 
     def _is_success(self, achieved_goal, desired_goal):
         return False
 
     def _sample_goal(self):
-        return np.array([0,0,0])
+        return np.zeros(12)
 
     def _viewer_setup(self):
         """Initial configuration of the viewer. Can be used to set the camera position,

@@ -77,7 +77,6 @@ class ClothRobotEnv(gym.GoalEnv):
         self.goal = self._sample_goal()
         self.mocap_beginning = self.sim.data.get_site_xpos('S8_0').copy()
         
-
         obs = self._get_obs()
         self.action_space = spaces.Box(-1., 1., shape=(3,), dtype='float32')
 

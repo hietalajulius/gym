@@ -140,7 +140,6 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         
         if self.pixels:
             image_obs = copy.deepcopy(self.render(width=self.image_size, height=self.image_size, mode='rgb_array'))
-
             if not self.rgb:
                 image_obs = cv2.cvtColor(image_obs, cv2.COLOR_BGR2GRAY)
             
