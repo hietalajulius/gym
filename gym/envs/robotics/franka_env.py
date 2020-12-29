@@ -17,14 +17,16 @@ import math
 
 DEFAULT_SIZE = 500
 
+
 class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
-    def __init__(self, task, distance_threshold, strict, pixels, randomize_params, randomize_geoms, max_advance, random_seed,
-        image_size=84, rgb=True, n_substeps=40, noise_range=0.02, uniform_jnt_tend=True, debug_render=False, reward_type=None, mocap_control=True):
+    def __init__(self,  mocap_control=True):
         self.mocap_control = mocap_control
         if self.mocap_control:
-            model = mujoco_py.load_model_from_path("../../franka_sim/franka_cloth_mocap.xml")
+            model = mujoco_py.load_model_from_path(
+                "../../franka_sim/franka_cloth_mocap.xml")
         else:
-            model = mujoco_py.load_model_from_path("../../franka_sim/franka_cloth_ctrl.xml")
+            model = mujoco_py.load_model_from_path(
+                "../../franka_sim/franka_cloth_ctrl.xml")
         self.sim = mujoco_py.MjSim(model, nsubsteps=1)
         self.n_substeps = 40
 
@@ -42,60 +44,79 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
         self.ee_accelerations = [np.zeros(3)]
         self.ee_jerks = [np.zeros(3)]
 
-        self.joint_names = np.array(["panda0_joint" + str(name_idx) for name_idx in range(1,8)])
-        self.vel_sensor_names = np.array([joint_name + "_vel_sensor" for joint_name in self.joint_names])
-        self.pos_sensor_names = np.array([joint_name + "_pos_sensor" for joint_name in self.joint_names])
-        self.site_names =  ["S0_0", "S4_0", "S8_0", "S0_4", "S0_8", "S4_8", "S8_8", "S8_4", 'robot']
+        self.joint_names = np.array(
+            ["panda0_joint" + str(name_idx) for name_idx in range(1, 8)])
+        self.vel_sensor_names = np.array(
+            [joint_name + "_vel_sensor" for joint_name in self.joint_names])
+        self.pos_sensor_names = np.array(
+            [joint_name + "_pos_sensor" for joint_name in self.joint_names])
+        self.site_names = ["S0_0", "S4_0", "S8_0", "S0_4",
+                           "S0_8", "S4_8", "S8_8", "S8_4", 'robot']
 
         self.end_effector_vel_limit = 1.7
         self.end_effector_acc_limit = 13
         self.end_effector_jerk_limit = 6500
 
-        self.velocity_limits = np.array([2.1750, 2.1750, 2.1750, 2.1750, 2.6100, 2.6100, 2.6100])
+        self.velocity_limits = np.array(
+            [2.1750, 2.1750, 2.1750, 2.1750, 2.6100, 2.6100, 2.6100])
         self.acceleration_limits = np.array([15, 7.5, 10, 12.5, 15, 20, 20])
-        self.jerk_limits = np.array([7500, 3750, 5000, 6250, 7500, 10000, 10000])
-        self.initial_joint_values = np.array([-0.102, -0.116, -0.364, -2.68, -0.08, 2.58, -0.396])
+        self.jerk_limits = np.array(
+            [7500, 3750, 5000, 6250, 7500, 10000, 10000])
+        self.initial_joint_values = np.array(
+            [-0.102, -0.116, -0.364, -2.68, -0.08, 2.58, -0.396])
 
         self.vel_violations = 0
         self.acc_violations = 0
         self.jerk_violations = 0
         self.substeps_taken = 0
 
-
         self.seed()
         utils.disable_mocap_weld(self.sim, "end_effector_body", "B8_0")
-        self.initial_EE_position = np.array([0,0,0]) #Remove this
+        self.initial_EE_position = np.array([0, 0, 0])  # Remove this
         self._env_setup()
         self.initial_state = copy.deepcopy(self.sim.get_state())
         self.goal = self._sample_goal()
 
-        self.initial_EE_position = self.sim.data.get_site_xpos("end_effector_site").copy()
+        self.initial_EE_position = self.sim.data.get_site_xpos(
+            "end_effector_site").copy()
 
         self.key_callback_function = None
         obs = self._get_obs()
 
-
         if self.mocap_control:
-            self.action_space = spaces.Box(-1., 1., shape=(4,), dtype='float32')
+            self.action_space = spaces.Box(-1.,
+                                           1., shape=(4,), dtype='float32')
         else:
-            self.action_space = spaces.Box(-1., 1., shape=(9,), dtype='float32')
+            self.action_space = spaces.Box(-1.,
+                                           1., shape=(9,), dtype='float32')
 
         if 'image' in obs.keys():
             self.observation_space = spaces.Dict(dict(
-                desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-                achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-                observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
-                robot_observation=spaces.Box(-np.inf, np.inf, shape=obs['robot_observation'].shape, dtype='float32'),
-                model_params=spaces.Box(-np.inf, np.inf, shape=obs['model_params'].shape, dtype='float32'),
-                image=spaces.Box(-np.inf, np.inf, shape=obs['image'].shape, dtype='float32')
+                desired_goal=spaces.Box(-np.inf, np.inf,
+                                        shape=obs['achieved_goal'].shape, dtype='float32'),
+                achieved_goal=spaces.Box(-np.inf, np.inf,
+                                         shape=obs['achieved_goal'].shape, dtype='float32'),
+                observation=spaces.Box(-np.inf, np.inf,
+                                       shape=obs['observation'].shape, dtype='float32'),
+                robot_observation=spaces.Box(-np.inf, np.inf,
+                                             shape=obs['robot_observation'].shape, dtype='float32'),
+                model_params=spaces.Box(-np.inf, np.inf,
+                                        shape=obs['model_params'].shape, dtype='float32'),
+                image=spaces.Box(-np.inf, np.inf,
+                                 shape=obs['image'].shape, dtype='float32')
             ))
         else:
             self.observation_space = spaces.Dict(dict(
-                desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-                achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
-                observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
-                robot_observation=spaces.Box(-np.inf, np.inf, shape=obs['robot_observation'].shape, dtype='float32'),
-                model_params=spaces.Box(-np.inf, np.inf, shape=obs['model_params'].shape, dtype='float32')
+                desired_goal=spaces.Box(-np.inf, np.inf,
+                                        shape=obs['achieved_goal'].shape, dtype='float32'),
+                achieved_goal=spaces.Box(-np.inf, np.inf,
+                                         shape=obs['achieved_goal'].shape, dtype='float32'),
+                observation=spaces.Box(-np.inf, np.inf,
+                                       shape=obs['observation'].shape, dtype='float32'),
+                robot_observation=spaces.Box(-np.inf, np.inf,
+                                             shape=obs['robot_observation'].shape, dtype='float32'),
+                model_params=spaces.Box(-np.inf, np.inf,
+                                        shape=obs['model_params'].shape, dtype='float32')
             ))
 
     @property
@@ -123,8 +144,8 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
     def _take_substeps(self, action=None):
         self.substeps_taken += 1
         #print("\nTaking subs ", self.substeps_taken, "Viols", self.vel_violations, self.acc_violations, self.jerk_violations)
-        
-        for step in range(1,self.n_substeps+1):
+
+        for step in range(1, self.n_substeps+1):
             if not action is None and self.mocap_control:
                 linear_action = (action / self.n_substeps)*step
                 self._set_action(linear_action)
@@ -133,15 +154,16 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
 
             self.sim.step()
 
-            ee_moves = self.initial_EE_position - self.sim.data.get_site_xpos("end_effector_site").copy()
+            ee_moves = self.initial_EE_position - \
+                self.sim.data.get_site_xpos("end_effector_site").copy()
 
             #print(ee_moves[0] ,ee_moves[1] , ee_moves[2], )
-            
 
+            positions = np.array([self.sim.data.get_sensor(
+                pos_sensor_name).copy() for pos_sensor_name in self.pos_sensor_names])
 
-            positions = np.array([self.sim.data.get_sensor(pos_sensor_name).copy() for pos_sensor_name in self.pos_sensor_names])
-
-            velocities = np.array([self.sim.data.get_sensor(vel_sensor_name) for vel_sensor_name in self.vel_sensor_names])
+            velocities = np.array([self.sim.data.get_sensor(
+                vel_sensor_name) for vel_sensor_name in self.vel_sensor_names])
             accelerations = (velocities - self.velocities[-1]) / 0.001
             jerks = (accelerations - self.accelerations[-1]) / 0.001
 
@@ -153,8 +175,7 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
 
             self.ee_velocities.append(ee_vel)
             self.ee_accelerations.append(ee_acc)
-            
-            
+
             if np.any(self.velocity_limits < abs(velocities)):
                 #print("vels", velocities, self.velocity_limits < abs(velocities), "\n")
                 #print("Vel viol at substep ", step, self.joint_names[self.velocity_limits < abs(velocities)], abs(velocities-self.velocity_limits)[self.velocity_limits < abs(velocities)], velocities[self.velocity_limits < abs(velocities)])
@@ -169,7 +190,6 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
                 #print("jerks", jerks, self.jerk_limits < abs(jerks), "\n")
                 #print("jerk viol at substep ", step, self.joint_names[self.jerk_limits < abs(jerks)], abs(jerks-self.jerk_limits)[self.jerk_limits < abs(jerks)], jerks[self.jerk_limits < abs(jerks)])
                 self.jerk_violations += 1
-            
 
             self.velocities.append(velocities)
             self.accelerations.append(accelerations)
@@ -183,12 +203,10 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
             pass
             #print([pos for pos in positions], ",")
 
-
-
     def step(self, action):
         #action = np.clip(action, self.action_space.low, self.action_space.high)
         #action = np.array(action)
-        #self._set_action(action)
+        # self._set_action(action)
         self._take_substeps(action)
         obs = self._get_obs()
 
@@ -221,12 +239,12 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
         obs = self._get_obs()
         return obs
 
-
     def render(self, mode='human', width=DEFAULT_SIZE, height=DEFAULT_SIZE):
         if mode == 'rgb_array':
             self._get_viewer(mode).render(width, height)
             # window size used for old mujoco-py:
-            data = self._get_viewer(mode).read_pixels(width, height, depth=False)
+            data = self._get_viewer(mode).read_pixels(
+                width, height, depth=False)
             # original image is upside-down, so flip it
             return data[::-1, :, :]
         elif mode == 'human':
@@ -236,9 +254,11 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
         self.viewer = self._viewers.get(mode)
         if self.viewer is None:
             if mode == 'human':
-                self.viewer = mujoco_py.MjViewer(self.sim, self.key_callback_function)
+                self.viewer = mujoco_py.MjViewer(
+                    self.sim, self.key_callback_function)
             elif mode == 'rgb_array':
-                self.viewer = mujoco_py.MjRenderContextOffscreen(self.sim, device_id=-1)
+                self.viewer = mujoco_py.MjRenderContextOffscreen(
+                    self.sim, device_id=-1)
             self._viewer_setup()
             self._viewers[mode] = self.viewer
         return self.viewer
@@ -256,8 +276,6 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
         utils.enable_mocap_weld(self.sim, "end_effector_body", "B8_0")
         for _ in range(10):
             self._take_substeps()
-        
-
 
     def _reset_sim(self):
         self.sim.set_state(self.initial_state)
@@ -269,16 +287,17 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
     def _get_obs(self):
 
         body_0_8 = self.sim.data.get_site_xpos("S0_8").copy()
-        body_0_0= self.sim.data.get_site_xpos("S0_0").copy()
+        body_0_0 = self.sim.data.get_site_xpos("S0_0").copy()
         body_8_8 = self.sim.data.get_site_xpos("S8_8").copy()
         body_8_0 = self.sim.data.get_site_xpos("S8_0").copy()
-        achieved_goal = np.concatenate([body_8_8, body_8_0, body_0_8, body_0_0]).flatten()
+        achieved_goal = np.concatenate(
+            [body_8_8, body_8_0, body_0_8, body_0_0]).flatten()
 
-
-
-        pos = np.array([self.sim.data.get_site_xpos(site).copy() for site in self.site_names]).flatten()
+        pos = np.array([self.sim.data.get_site_xpos(site).copy()
+                        for site in self.site_names]).flatten()
         dt = self.n_substeps * self.sim.model.opt.timestep
-        vel = np.array([self.sim.data.get_site_xvelp(site).copy() for site in self.site_names]).flatten() * dt
+        vel = np.array([self.sim.data.get_site_xvelp(site).copy()
+                        for site in self.site_names]).flatten() * dt
 
         obs = np.concatenate([pos, vel])
 
@@ -292,10 +311,11 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
             'achieved_goal': achieved_goal.copy(),
             'desired_goal': self.goal.copy(),
             'model_params': model_params.copy(),
-            'robot_observation' : robot_obs
+            'robot_observation': robot_obs
         }
-        
-        image_obs = copy.deepcopy(self.render(width=84, height=84, mode='rgb_array'))
+
+        image_obs = copy.deepcopy(self.render(
+            width=84, height=84, mode='rgb_array'))
         observation['image'] = (image_obs / 255).flatten()
         if False:
             print("Image obs", image_obs)
@@ -303,7 +323,6 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
             cv2.imshow('env', cv2.cvtColor(image_obs, cv2.COLOR_RGB2BGR))
             cv2.waitKey(1)
         return observation
-        
 
     def _is_success(self, achieved_goal, desired_goal):
         return False
@@ -319,4 +338,3 @@ class FrankaEnv(gym.GoalEnv, gym_utils.EzPickle):
 
     def compute_reward(self, achieved_goal, goal, info):
         return 1
-

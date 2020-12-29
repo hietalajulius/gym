@@ -10,6 +10,7 @@
         <texture name="rgsideways" type="2d" file="../textures/rgs.png"/>
         <texture name="red" type="2d" file="../textures/red.png"/>
         <texture name="white" type="2d" file="../textures/white.png"/>
+        <texture name="white_borders" type="2d" file="../textures/white_borders.png"/>
 
 
         <material name="combo" texture="texcarpet" texrepeat="100 1" texuniform="false"/>
@@ -31,7 +32,7 @@
         <material name="rgsideways" texture="rgsideways"/>
         <material name="red" texture="red"/>
         <material name="white" texture="white"/>
-        <!--<material name="rb" texture="rdbl"/>-->
+        <material name="white_borders" texture="white_borders"/>
         
         <mesh file="base_link_collision.stl" name="robot0:base_link"></mesh>
         <mesh file="bellows_link_collision.stl" name="robot0:bellows_link"></mesh>
