@@ -26,21 +26,35 @@
 
 		<include file="robot.xml"></include>
 
+		
 		<body pos="0.135 0.135 0">
             <composite type="grid" count="9 9 1" spacing="0.02"  >
-                    <joint kind="main" damping="0.001" stiffness="0.001"/> <!--Params adjusted in code-->
-                    <tendon width="0.001" kind="shear" damping="0.001" stiffness="0.001" /> <!--Params adjusted in code-->
+                    <joint kind="main" damping="0.001" stiffness="0.001"/>
+                    <tendon width="0.001" kind="shear" damping="0.001" stiffness="0.001" /> 
                     <skin material="white_borders" texcoord="true" inflate="0.0002" subgrid="2"/>
                     <geom type="capsule" size="0.005" rgba=".8 .2 .1 1" friction='1.5 1.5 1.5' solref='0.01 1' solimp='0.99 0.99 0.01' condim='4' />
             </composite>
 		</body>
 		
-		<!--<composite prefix="p" type="grid" count="9 9 1" spacing="0.025" >
-                    <joint kind="main" damping="0.05" stiffness="0.1"/>
-                    <tendon width="0.001" kind="shear" damping="0.05" stiffness="0.1" />
-                    <skin material="rgsideways" texcoord="true" inflate="0.0002" subgrid="2"/>
-                    <geom type="capsule" size="0.01" rgba=".8 .2 .1 1" mass="0.008" condim="6" friction="2 2 2" />
-            </composite> -->
+		<!-- Ranges
+		<body pos="0.135 0.135 0">
+            <composite type="grid" count="9 9 1" spacing="0.02"  >
+                    <joint kind="main" damping="0.00001" stiffness="0.00001"/>
+                    <tendon width="0.001" kind="shear" damping="0.00001" stiffness="0.00001" /> 
+                    <skin material="white_borders" texcoord="true" inflate="0.0002" subgrid="2"/>
+                    <geom type="capsule" size="0.005" rgba=".8 .2 .1 1" friction='1.5 1.5 1.5' solref='0.01 1' solimp='0.99 0.99 0.01' condim='4' />
+            </composite>
+		</body>
+
+		<body pos="0.335 0.335 0">
+			<composite prefix="p" type="grid" count="9 9 1" spacing="0.02" >
+                    <joint kind="main" damping="0.02" stiffness="0.02"/> 
+                    <tendon width="0.001" kind="shear" damping="0.02" stiffness="0.02" />
+                    <skin material="white_borders" texcoord="true" inflate="0.0002" subgrid="2"/>
+                    <geom type="capsule" size="0.005" rgba=".8 .2 .1 1" friction='1.5 1.5 1.5' solref='0.01 1' solimp='0.99 0.99 0.01' condim='4' />
+            </composite>
+		</body>
+		-->
 
 
 		<light directional="true" ambient="0.2 0.2 0.2" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" castshadow="false" pos="0 0 4" dir="0 0 -1" name="light0"></light>

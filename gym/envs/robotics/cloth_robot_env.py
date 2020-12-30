@@ -56,11 +56,11 @@ class ClothRobotEnv(gym.GoalEnv):
         # TODO: enable dynamic size and orientation config
         self.maximum = self.origin[0] + self.maxdist
         self.minimum = self.origin[0] - self.maxdist
-        self.min_damping = 0.01  # TODO: pass ranges in from outside
-        self.max_damping = 0.05
+        self.min_damping = 0.00001  # TODO: pass ranges in from outside
+        self.max_damping = 0.02
 
-        self.min_stiffness = 0.1  # TODO: pass ranges in from outside
-        self.max_stiffness = 1
+        self.min_stiffness = 0.00001  # TODO: pass ranges in from outside
+        self.max_stiffness = 0.02
 
         self.min_geom_size = 0.005  # TODO: pass ranges in from outside
         self.max_geom_size = 0.011
@@ -223,6 +223,7 @@ class ClothRobotEnv(gym.GoalEnv):
                 self.current_tendon_stiffness = self.current_joint_stiffness
                 self.current_tendon_damping = self.current_joint_damping
             else:
+                # Own damping/stiffness for tendons
                 self.current_tendon_stiffness = self.np_random.uniform(
                     self.min_stiffness, self.max_stiffness)
                 self.current_tendon_damping = self.np_random.uniform(
