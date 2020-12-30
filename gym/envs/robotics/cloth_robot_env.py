@@ -11,6 +11,7 @@ from gym import error, spaces
 from gym.utils import seeding
 from gym.envs.robotics import utils
 import cv2
+import time
 
 try:
     import mujoco_py
@@ -22,7 +23,7 @@ DEFAULT_SIZE = 500
 
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, sparse_dense, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, max_advance, random_seed):
+    def __init__(self, model_path, sparse_dense, sparse_dense_max_steps, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, max_advance, random_seed):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -72,6 +73,9 @@ class ClothRobotEnv(gym.GoalEnv):
 
         self.done = False  # TODO: Verify that this makes sense
         self.sparse_dense = sparse_dense
+
+        self.sparse_dense_max_steps = sparse_dense_max_steps
+        self.sparse_dense_steps = 0
 
         if self.randomize_params:
             self.set_joint_tendon_params()
@@ -169,10 +173,19 @@ class ClothRobotEnv(gym.GoalEnv):
         }
 
         done = False
+
         if info['is_success']:
-            print("Real sim success", reward, info)
-            done = True
             self.done = True
+            if self.sparse_dense:
+                self.sparse_dense_steps += 1
+
+            print("Real sim success", reward, info, self.sparse_dense_steps)
+            if not self.sparse_dense or self.sparse_dense_steps >= self.sparse_dense_max_steps:
+                done = True
+
+            self.render(mode='rgb_array', height=500, width=500, image_capture=True,
+                        filename='success_images/' + str(time.time()).replace(".", "-") + '.png')
+
         return obs, reward, done, info
 
     def set_geom_params(self):
@@ -195,6 +208,7 @@ class ClothRobotEnv(gym.GoalEnv):
 
     def reset(self):
         self.done = False
+        self.sparse_dense_steps = 0
         self._reset_sim()
         self.goal = self._sample_goal().copy()  # Sample goal only after reset
         self._reset_view()  # Set goal sites based on sampled goal

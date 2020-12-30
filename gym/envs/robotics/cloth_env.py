@@ -28,6 +28,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         random_seed=1,
         goal_noise_range=(0, 0.05),
         sparse_dense=False,
+        sparse_dense_max_steps=10,
         max_advance=0.05,
         randomize_params=False,
         randomize_geoms=False,
@@ -35,7 +36,6 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         n_substeps=40,
         uniform_jnt_tend=True
     ):
-
         self.goal_noise_range = goal_noise_range
         self.velocity_in_obs = velocity_in_obs
         self.image_size = image_size
@@ -49,6 +49,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         super(ClothEnv, self).__init__(
 
             sparse_dense=sparse_dense,
+            sparse_dense_max_steps=sparse_dense_max_steps,
             model_path=model_path,
             n_substeps=n_substeps,
             randomize_params=randomize_params,
