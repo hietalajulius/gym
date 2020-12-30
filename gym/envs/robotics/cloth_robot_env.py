@@ -23,7 +23,7 @@ DEFAULT_SIZE = 500
 
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, sparse_dense, sparse_dense_max_steps, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, max_advance, random_seed):
+    def __init__(self, model_path, sparse_dense, sparse_dense_max_steps, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, max_advance, random_seed, debug_render_success):
         if model_path.startswith('/'):
             fullpath = model_path
         else:
@@ -71,11 +71,12 @@ class ClothRobotEnv(gym.GoalEnv):
         self.current_tendon_stiffness = self.min_stiffness
         self.current_tendon_damping = self.min_damping
 
-        self.done = False  # TODO: Verify that this makes sense
         self.sparse_dense = sparse_dense
 
         self.sparse_dense_max_steps = sparse_dense_max_steps
         self.sparse_dense_steps = 0
+
+        self.debug_render_success = debug_render_success
 
         if self.randomize_params:
             self.set_joint_tendon_params()
@@ -157,8 +158,6 @@ class ClothRobotEnv(gym.GoalEnv):
             self.sim.step()
 
     def step(self, action):
-        if not self.sparse_dense and self.done:
-            return self.reset()
         action = np.clip(action, self.action_space.low, self.action_space.high)
         action = np.array(action)
         self._set_action(action)
@@ -175,16 +174,18 @@ class ClothRobotEnv(gym.GoalEnv):
         done = False
 
         if info['is_success']:
-            self.done = True
+            print("Real sim success", reward,
+                  info, self.sparse_dense_steps, self.current_joint_damping, self.current_joint_stiffness)
+
             if self.sparse_dense:
                 self.sparse_dense_steps += 1
 
-            print("Real sim success", reward, info, self.sparse_dense_steps)
             if not self.sparse_dense or self.sparse_dense_steps >= self.sparse_dense_max_steps:
                 done = True
 
-            self.render(mode='rgb_array', height=500, width=500, image_capture=True,
-                        filename='success_images/' + str(time.time()).replace(".", "-") + '.png')
+            if self.debug_render_success:
+                self.render(mode='rgb_array', height=500, width=500, image_capture=True,
+                            filename='success_images/' + str(time.time()).replace(".", "-") + '.png')
 
         return obs, reward, done, info
 
@@ -207,7 +208,6 @@ class ClothRobotEnv(gym.GoalEnv):
             self.sim.model.tendon_damping[tendon_id] = self.current_tendon_damping
 
     def reset(self):
-        self.done = False
         self.sparse_dense_steps = 0
         self._reset_sim()
         self.goal = self._sample_goal().copy()  # Sample goal only after reset

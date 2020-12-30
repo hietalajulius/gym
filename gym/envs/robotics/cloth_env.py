@@ -23,6 +23,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self,
         model_path,
         constraints,
+        debug_render_success=False,
         velocity_in_obs=True,
         pixels=False,
         random_seed=1,
@@ -47,7 +48,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
             self.constraints, self.single_goal_dim, sparse_dense)
 
         super(ClothEnv, self).__init__(
-
+            debug_render_success=debug_render_success,
             sparse_dense=sparse_dense,
             sparse_dense_max_steps=sparse_dense_max_steps,
             model_path=model_path,
