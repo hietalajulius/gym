@@ -174,14 +174,15 @@ class ClothRobotEnv(gym.GoalEnv):
         done = False
 
         if info['is_success']:
-            print("Real sim success", reward,
-                  info, self.sparse_dense_steps, self.current_joint_damping, self.current_joint_stiffness)
-
             if self.sparse_dense:
                 self.sparse_dense_steps += 1
 
             if not self.sparse_dense or self.sparse_dense_steps >= self.sparse_dense_max_steps:
                 done = True
+
+            if self.sparse_dense_steps == 1 or done:
+                print("Real sim ep success", reward,
+                      info, self.sparse_dense_steps, self.current_joint_damping, self.current_joint_stiffness)
 
             if self.debug_render_success:
                 self.render(mode='rgb_array', height=500, width=500, image_capture=True,
