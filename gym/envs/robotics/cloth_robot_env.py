@@ -68,6 +68,7 @@ class ClothRobotEnv(gym.GoalEnv):
 
         self.current_joint_stiffness = self.min_stiffness
         self.current_joint_damping = self.min_damping
+
         self.current_tendon_stiffness = self.min_stiffness
         self.current_tendon_damping = self.min_damping
 
@@ -197,16 +198,20 @@ class ClothRobotEnv(gym.GoalEnv):
                 self.sim.model.geom_size[geom_id] = self.current_geom_size * \
                     (1 + np.random.randn()*0.01)  # TODO: Figure out if this makes sense
 
-    def set_joint_tendon_params(self):
+        self.sim.forward()
+
+    def set_joint_tendon_params(self, joint_stiffness, joint_damping, tendon_stiffness, tendon_damping):
         for _, joint_name in enumerate(self.sim.model.joint_names):
             joint_id = self.sim.model.joint_name2id(joint_name)
-            self.sim.model.jnt_stiffness[joint_id] = self.current_joint_stiffness
-            self.sim.model.dof_damping[joint_id] = self.current_joint_damping
+            self.sim.model.jnt_stiffness[joint_id] = joint_stiffness
+            self.sim.model.dof_damping[joint_id] = joint_damping
 
         for _, tendon_name in enumerate(self.sim.model.tendon_names):
             tendon_id = self.sim.model.tendon_name2id(tendon_name)
-            self.sim.model.tendon_stiffness[tendon_id] = self.current_tendon_stiffness
-            self.sim.model.tendon_damping[tendon_id] = self.current_tendon_damping
+            self.sim.model.tendon_stiffness[tendon_id] = tendon_stiffness
+            self.sim.model.tendon_damping[tendon_id] = tendon_damping
+
+        self.sim.forward()
 
     def reset(self):
         self.sparse_dense_steps = 0
@@ -230,15 +235,13 @@ class ClothRobotEnv(gym.GoalEnv):
                 self.current_tendon_damping = self.np_random.uniform(
                     self.min_damping, self.max_damping)
 
-            self.set_joint_tendon_params()
+            self.set_joint_tendon_params(self.current_joint_stiffness, self.current_joint_damping,
+                                         self.current_tendon_stiffness, self.current_tendon_damping)
 
         if self.randomize_geoms:
             self.current_geom_size = self.np_random.uniform(
                 self.min_geom_size, self.max_geom_size)
             self.set_geom_params()
-
-        if self.randomize_geoms or self.randomize_params:
-            self.sim.forward()
 
         obs = self._get_obs()
         return obs
