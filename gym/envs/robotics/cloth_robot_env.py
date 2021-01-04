@@ -80,7 +80,8 @@ class ClothRobotEnv(gym.GoalEnv):
         self.debug_render_success = debug_render_success
 
         if self.randomize_params:
-            self.set_joint_tendon_params()
+            self.set_joint_tendon_params(self.current_joint_stiffness, self.current_joint_damping,
+                                         self.current_tendon_stiffness, self.current_tendon_damping)
         if self.randomize_geoms:
             self.set_geom_params()
 
