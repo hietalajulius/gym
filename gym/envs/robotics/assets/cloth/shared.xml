@@ -55,7 +55,8 @@
     </asset>
 
     <equality>
-        <!--<weld body1="robot0:mocap" body2="B0_0" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld solref="0.001 1" body1="robot0:mocap" body2="B8_0" ></weld>
+        <!--<weld solref="0.001 1" body1="robot1:mocap" body2="pB8_0" ></weld>
         <weld body1="robot0:mocap" body2="B0_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
         <weld body1="robot0:mocap" body2="B0_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
         <weld body1="robot0:mocap" body2="B0_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
@@ -134,10 +135,7 @@
         <weld body1="robot0:mocap" body2="B7_6" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
         <weld body1="robot0:mocap" body2="B7_7" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
         <weld body1="robot0:mocap" body2="B7_8" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
-        -->
-        <weld solref="0.001 1" body1="robot0:mocap" body2="B8_0" ></weld>
-        <!--<weld solref="0.001 1" body1="robot1:mocap" body2="pB8_0" ></weld> -->
-        <!--<weld body1="robot0:mocap" body2="B8_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
+        <weld body1="robot0:mocap" body2="B8_1" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
         <weld body1="robot0:mocap" body2="B8_2" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
         <weld body1="robot0:mocap" body2="B8_3" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
         <weld body1="robot0:mocap" body2="B8_4" solimp="0.9 0.95 0.001" solref="0.02 1"></weld>
