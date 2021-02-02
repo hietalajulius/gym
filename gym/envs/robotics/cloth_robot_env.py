@@ -23,16 +23,11 @@ DEFAULT_SIZE = 500
 
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, model_path, sparse_dense, sparse_dense_max_steps, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, max_advance, random_seed, debug_render_success):
-        if model_path.startswith('/'):
-            fullpath = model_path
-        else:
-            fullpath = os.path.join(os.path.dirname(
-                __file__), 'assets', model_path)
-        if not os.path.exists(fullpath):
-            raise IOError('File {} does not exist'.format(fullpath))
+    def __init__(self, action_space, model, sparse_dense, sparse_dense_max_steps, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, max_advance, random_seed, debug_render_success):
 
-        model = mujoco_py.load_model_from_path(fullpath)
+        self.action_space = action_space
+        self.previous_action = np.zeros(action_space.shape[0])
+
         self.sim = mujoco_py.MjSim(model, nsubsteps=1)
         self.pixels = pixels
         self.max_advance = max_advance
@@ -93,7 +88,6 @@ class ClothRobotEnv(gym.GoalEnv):
         self.mocap_beginning = self.sim.data.get_site_xpos('S8_0').copy()
 
         obs = self._get_obs()
-        self.action_space = spaces.Box(-1., 1., shape=(3,), dtype='float32')
 
         if self.pixels:
             self.observation_space = spaces.Dict(dict(
@@ -149,11 +143,7 @@ class ClothRobotEnv(gym.GoalEnv):
         return [seed]
 
     def _set_action(self, action):
-        action = action.copy()
-        pos_ctrl = action[:3]
-        pos_ctrl *= self.max_advance
-        utils.mocap_set_action_cloth(
-            self.sim, pos_ctrl, self.minimum, self.maximum)
+        raise NotImplementedError()
 
     def _take_substeps(self):
         for _ in range(self.n_substeps):
@@ -162,10 +152,13 @@ class ClothRobotEnv(gym.GoalEnv):
     def step(self, action):
         action = np.clip(action, self.action_space.low, self.action_space.high)
         action = np.array(action)
+
         self._set_action(action)
         self._take_substeps()
         self._step_callback()
         obs = self._get_obs()
+        # Set previous action only after current obs returned
+        self.previous_action = action
         reward = self.compute_reward(np.reshape(
             obs['achieved_goal'], (1, -1)), np.reshape(self.goal, (1, -1)), dict(real_sim=True))[0]
 
@@ -244,6 +237,7 @@ class ClothRobotEnv(gym.GoalEnv):
                 self.min_geom_size, self.max_geom_size)
             self.set_geom_params()
 
+        self.previous_action = np.zeros(self.action_space.shape[0])
         obs = self._get_obs()
         return obs
 
@@ -281,29 +275,10 @@ class ClothRobotEnv(gym.GoalEnv):
         return self.viewer
 
     def _env_setup(self):
-        utils.reset_mocap_welds(self.sim)
-        utils.reset_mocap2body_xpos(self.sim)
-        lim1_id = self.sim.model.site_name2id('limit0')
-        lim2_id = self.sim.model.site_name2id('limit1')
-        lim3_id = self.sim.model.site_name2id('limit2')
-        lim4_id = self.sim.model.site_name2id('limit3')
-
-        self.sim.model.site_pos[lim1_id] = self.origin + \
-            np.array([-self.maxdist, -self.maxdist, 0])
-        self.sim.model.site_pos[lim2_id] = self.origin + \
-            np.array([self.maxdist, -self.maxdist, 0])
-        self.sim.model.site_pos[lim3_id] = self.origin + \
-            np.array([-self.maxdist, self.maxdist, 0])
-        self.sim.model.site_pos[lim4_id] = self.origin + \
-            np.array([self.maxdist, self.maxdist, 0])
-
-        for _ in range(10):
-            self._take_substeps()
+        raise NotImplementedError()
 
     def _reset_sim(self):
-        self.sim.set_state(self.initial_state)
-        utils.set_mocap_position(self.sim, self.mocap_beginning)
-        self.sim.forward()
+        raise NotImplementedError()
 
     def _reset_view(self):
         raise NotImplementedError()

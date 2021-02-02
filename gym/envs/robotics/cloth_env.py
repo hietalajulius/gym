@@ -8,6 +8,9 @@ from gym.envs.robotics import rotations, cloth_robot_env, utils, reward_calculat
 import cv2
 import copy
 from PIL import Image
+import mujoco_py
+import os
+from gym import error, spaces
 
 
 def goal_distance(goal_a, goal_b):
@@ -23,6 +26,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self,
         model_path,
         constraints,
+        template_kwargs={},
         debug_render_success=False,
         velocity_in_obs=True,
         pixels=False,
@@ -37,6 +41,16 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         n_substeps=40,
         uniform_jnt_tend=True
     ):
+        if model_path.startswith('/'):
+            fullpath = model_path
+        else:
+            fullpath = os.path.join(os.path.dirname(
+                __file__), 'assets', model_path)
+        if not os.path.exists(fullpath):
+            raise IOError('File {} does not exist'.format(fullpath))
+
+        model = mujoco_py.load_model_from_path(fullpath)
+
         self.goal_noise_range = goal_noise_range
         self.velocity_in_obs = velocity_in_obs
         self.image_size = image_size
@@ -47,11 +61,13 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.reward_function = reward_calculation.get_reward_function(
             self.constraints, self.single_goal_dim, sparse_dense)
 
+        action_space = spaces.Box(-1., 1., shape=(3,), dtype='float32')
         super(ClothEnv, self).__init__(
+            action_space=action_space,
             debug_render_success=debug_render_success,
             sparse_dense=sparse_dense,
             sparse_dense_max_steps=sparse_dense_max_steps,
-            model_path=model_path,
+            model=model,
             n_substeps=n_substeps,
             randomize_params=randomize_params,
             randomize_geoms=randomize_geoms,
@@ -62,6 +78,13 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         return self.reward_function(achieved_goal, desired_goal, info)
+
+    def _set_action(self, action):
+        action = action.copy()
+        pos_ctrl = action[:3]
+        pos_ctrl *= self.max_advance
+        utils.mocap_set_action_cloth(
+            self.sim, pos_ctrl, self.minimum, self.maximum)
 
     def _get_obs(self):
         achieved_goal = np.zeros(self.single_goal_dim*len(self.constraints))
@@ -122,6 +145,26 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self.viewer.cam.azimuth = 0.
         self.viewer.cam.elevation = -90.
 
+    def _env_setup(self):
+        utils.reset_mocap_welds(self.sim)
+        utils.reset_mocap2body_xpos(self.sim)
+        lim1_id = self.sim.model.site_name2id('limit0')
+        lim2_id = self.sim.model.site_name2id('limit1')
+        lim3_id = self.sim.model.site_name2id('limit2')
+        lim4_id = self.sim.model.site_name2id('limit3')
+
+        self.sim.model.site_pos[lim1_id] = self.origin + \
+            np.array([-self.maxdist, -self.maxdist, 0])
+        self.sim.model.site_pos[lim2_id] = self.origin + \
+            np.array([self.maxdist, -self.maxdist, 0])
+        self.sim.model.site_pos[lim3_id] = self.origin + \
+            np.array([-self.maxdist, self.maxdist, 0])
+        self.sim.model.site_pos[lim4_id] = self.origin + \
+            np.array([self.maxdist, self.maxdist, 0])
+
+        for _ in range(10):
+            self._take_substeps()
+
     def _reset_view(self):
         targets = ['target0', 'target1']
         next_target = 0
@@ -134,6 +177,11 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
                                                              self.single_goal_dim:(i+1)*self.single_goal_dim]
                 next_target += 1
 
+        self.sim.forward()
+
+    def _reset_sim(self):
+        self.sim.set_state(self.initial_state)
+        utils.set_mocap_position(self.sim, self.mocap_beginning)
         self.sim.forward()
 
     def _sample_goal(self):
