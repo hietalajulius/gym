@@ -36,9 +36,15 @@ def get_reward_function(constraints, single_goal_dim, sparse_dense):
                                   axis=1) / len(constraints)
             fails = np.invert(successes)
             dist_rewards[fails] = -1
-            return dist_rewards
+            rewards = dist_rewards
         else:
-            return successes.astype(np.float32).flatten() - 1
+            rewards = successes.astype(np.float32).flatten() - 1
+
+        if 'control_penalties' in info.keys():
+                  info['control_penalties'].shape)
+            rewards += info['control_penalties']
+
+        return rewards
 
     return reward_function
 
