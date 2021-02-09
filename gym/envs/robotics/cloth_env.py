@@ -26,6 +26,7 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         self,
         model_path,
         constraints,
+        n_substeps,
         template_kwargs={},
         debug_render_success=False,
         velocity_in_obs=True,
@@ -38,7 +39,6 @@ class ClothEnv(cloth_robot_env.ClothRobotEnv):
         randomize_params=False,
         randomize_geoms=False,
         image_size=84,
-        n_substeps=40,
         uniform_jnt_tend=True
     ):
         if model_path.startswith('/'):
