@@ -162,9 +162,16 @@ class ClothRobotEnv(gym.GoalEnv):
         reward = self.compute_reward(np.reshape(
             obs['achieved_goal'], (1, -1)), np.reshape(self.goal, (1, -1)), dict(real_sim=True))[0]
 
-        info = {
-            'is_success': not reward < 0,
-        }
+
+        info = {"task_reward": reward,
+                "velocity_penalty": 0.0,
+                "position_penalty": 0.0,
+                "acceleration_penalty": 0.0,
+                "velocity_over_limit": 0.0,
+                "position_over_limit": 0.0,
+                "acceleration_over_limit": 0,
+                "control_penalty": 0.0,
+                'is_success': not reward < 0}
 
         done = False
 
