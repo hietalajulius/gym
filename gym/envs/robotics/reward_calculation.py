@@ -6,8 +6,8 @@ def goal_distance(goal_a, goal_b):
     return np.linalg.norm(goal_a - goal_b, axis=-1)
 
 
-def get_reward_function(constraints, single_goal_dim, sparse_dense):
-    def reward_function(achieved_goal, desired_goal, info):
+def get_task_reward_function(constraints, single_goal_dim, sparse_dense):
+    def task_reward_function(achieved_goal, desired_goal, info):
         achieved_oks = np.zeros(
             (achieved_goal.shape[0], len(constraints)))
         achieved_distances = np.zeros(
@@ -41,18 +41,9 @@ def get_reward_function(constraints, single_goal_dim, sparse_dense):
         else:
             task_rewards = successes.astype(np.float32).flatten() - 1
 
-        if 'control_penalties' in info.keys():
-            rewards = task_rewards + info['control_penalties']
-        else:
-            rewards = task_rewards
+        return task_rewards
 
-        if 'return_success' in info.keys():
-            success = not task_rewards < 0
-            return rewards, success
-        else:
-            return rewards
-
-    return reward_function
+    return task_reward_function
 
 
 '''
