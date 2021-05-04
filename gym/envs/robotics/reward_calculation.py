@@ -8,7 +8,7 @@ def goal_distance(goal_a, goal_b):
 
 def get_task_reward_function(constraints, single_goal_dim, sparse_dense, reward_offset):
     def task_reward_function(achieved_goal, desired_goal, info):
-        ctrl_penalty_onlys = info['ctrl_penalty_onlys'].flatten()
+        #ctrl_penalty_onlys = info['ctrl_penalty_onlys'].flatten()
 
         achieved_oks = np.zeros(
             (achieved_goal.shape[0], len(constraints)))
@@ -44,7 +44,7 @@ def get_task_reward_function(constraints, single_goal_dim, sparse_dense, reward_
             task_rewards = successes.astype(np.float32).flatten() - 1
 
 
-        task_rewards[ctrl_penalty_onlys] = -1
+        #task_rewards[ctrl_penalty_onlys] = -1
         return task_rewards + reward_offset
 
     return task_reward_function
