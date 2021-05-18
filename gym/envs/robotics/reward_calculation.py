@@ -6,10 +6,8 @@ def goal_distance(goal_a, goal_b):
     return np.linalg.norm(goal_a - goal_b, axis=-1)
 
 
-def get_task_reward_function(constraints, single_goal_dim, sparse_dense, reward_offset):
+def get_task_reward_function(constraints, single_goal_dim, sparse_dense, success_reward, fail_reward, extra_reward):
     def task_reward_function(achieved_goal, desired_goal, info):
-        #ctrl_penalty_onlys = info['ctrl_penalty_onlys'].flatten()
-
         achieved_oks = np.zeros(
             (achieved_goal.shape[0], len(constraints)))
         achieved_distances = np.zeros(
@@ -33,19 +31,23 @@ def get_task_reward_function(constraints, single_goal_dim, sparse_dense, reward_
             achieved_oks[:, i] = constraint_ok
 
         successes = np.all(achieved_oks, axis=1)
+        fails = np.invert(successes)
+
+        task_rewards = successes.astype(np.float32).flatten()*success_reward
+
         if sparse_dense:
             dist_rewards = np.sum((1 - achieved_distances/np.array(constraint_distances)),
                                   axis=1) / len(constraints)
-            fails = np.invert(successes)
-            dist_rewards[fails] = -1
-            task_rewards = dist_rewards
 
-        else:
-            task_rewards = successes.astype(np.float32).flatten() - 1
+            task_rewards = task_rewards + dist_rewards*(extra_reward-success_reward)
+            
+            if "num_future_goals" in info.keys():
+                num_future_goals = info['num_future_goals']
+                task_rewards[-num_future_goals:] = success_reward
 
+        task_rewards[fails] = fail_reward
 
-        #task_rewards[ctrl_penalty_onlys] = -1
-        return task_rewards + reward_offset
+        return task_rewards
 
     return task_reward_function
 
