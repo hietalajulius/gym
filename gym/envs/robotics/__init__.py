@@ -12,6 +12,3 @@ from gym.envs.robotics.hand.manipulate import HandPenEnv
 from gym.envs.robotics.hand.manipulate_touch_sensors import HandBlockTouchSensorsEnv
 from gym.envs.robotics.hand.manipulate_touch_sensors import HandEggTouchSensorsEnv
 from gym.envs.robotics.hand.manipulate_touch_sensors import HandPenTouchSensorsEnv
-
-#from gym.envs.robotics.cloth.cloth import ClothEnv
-#from gym.envs.robotics.franka.franka import FrankaEnv
