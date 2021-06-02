@@ -41,7 +41,7 @@ class FrankaEnv(cloth_robot_env.ClothRobotEnv):
         goal_noise_range=(0, 0.05),
         sparse_dense=False,
         sparse_dense_max_steps=10,
-        max_advance=0.05,
+        output_max=0.05,
         randomize_params=False,
         randomize_geoms=False,
         image_size=84,
@@ -77,7 +77,7 @@ class FrankaEnv(cloth_robot_env.ClothRobotEnv):
             randomize_geoms=randomize_geoms,
             uniform_jnt_tend=uniform_jnt_tend,
             pixels=pixels,
-            max_advance=max_advance,
+            output_max=output_max,
             random_seed=random_seed)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
@@ -85,7 +85,7 @@ class FrankaEnv(cloth_robot_env.ClothRobotEnv):
 
     def _set_action(self, action):
         action = action.copy()
-        action *= self.max_advance
+        action *= self.output_max
         utils.ctrl_set_action(self.sim, action)
 
     def _get_obs(self):

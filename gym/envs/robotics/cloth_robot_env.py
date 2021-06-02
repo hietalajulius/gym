@@ -23,14 +23,14 @@ DEFAULT_SIZE = 500
 
 
 class ClothRobotEnv(gym.GoalEnv):
-    def __init__(self, action_space, model, sparse_dense, sparse_dense_max_steps, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, max_advance, random_seed, debug_render_success):
+    def __init__(self, action_space, model, sparse_dense, sparse_dense_max_steps, n_substeps, randomize_params, uniform_jnt_tend, randomize_geoms, pixels, output_max, random_seed, debug_render_success):
 
         self.action_space = action_space
         self.previous_action = np.zeros(action_space.shape[0])
 
         self.sim = mujoco_py.MjSim(model, nsubsteps=1)
         self.pixels = pixels
-        self.max_advance = max_advance
+        self.output_max = output_max
         self.n_substeps = n_substeps
 
         self.randomize_params = randomize_params

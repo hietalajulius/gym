@@ -26,7 +26,7 @@ x4 = 4*x1
 
 def test_cloth_reward_calculation_no_sparse_dense():
     env = gym.make('Cloth-v1', pixels=False,
-                   randomize_params=False, randomize_geoms=False, max_advance=0.05, random_seed=1, sparse_dense=False, constraints=constraints)
+                   randomize_params=False, randomize_geoms=False, output_max=0.05, random_seed=1, sparse_dense=False, constraints=constraints)
 
     achieved_1 = np.concatenate((x1, x2, x3, x4))
     desired_1 = np.concatenate((x1, x2, x3, x4))
@@ -43,7 +43,7 @@ def test_cloth_reward_calculation_no_sparse_dense():
 
 def test_cloth_reward_calculation_no_sparse_dense_very_close():
     env = gym.make('Cloth-v1', pixels=False,
-                   randomize_params=False, randomize_geoms=False, max_advance=0.05, random_seed=1, sparse_dense=False, constraints=constraints)
+                   randomize_params=False, randomize_geoms=False, output_max=0.05, random_seed=1, sparse_dense=False, constraints=constraints)
 
     achieved_1 = np.concatenate((x1, x2, x3, x4))
     desired_1 = np.concatenate((x1, x2, x3, x4))
@@ -100,7 +100,7 @@ def test_cloth_reward_calculation_sparse_dense(spec):
     constraints = [c1, c2, c3, c4]
 
     env = gym.make('Cloth-v1', pixels=False,
-                   randomize_params=False, randomize_geoms=False, max_advance=0.05, random_seed=1, sparse_dense=True, constraints=constraints)
+                   randomize_params=False, randomize_geoms=False, output_max=0.05, random_seed=1, sparse_dense=True, constraints=constraints)
 
     achieved_1 = np.concatenate((x1, x2, x3, x4))
     desired_1 = np.concatenate((x1, x2, x3, x4))
